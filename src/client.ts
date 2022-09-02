@@ -47,7 +47,7 @@ export class BCA_API_Client {
     private signingFunction?: Function
     private authToken?: string
 
-    constructor(apiUrl: string, signingKey?: string, signingFunction?: Function) {
+    constructor(apiUrl: string, { signingKey, signingFunction }: { signingKey?: string, signingFunction?: Function }) {
         this.apiUrl = apiUrl
         this.signingKey = signingKey
         this.signingFunction = signingFunction
