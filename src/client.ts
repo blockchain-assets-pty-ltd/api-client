@@ -41,7 +41,7 @@ type APIResponse = {
     body: Record<string, any>
 }
 
-export default class BCA_API_Client {
+export class BCA_API_Client {
     private apiUrl: string
     private signingKey?: string
     private signingFunction?: Function
