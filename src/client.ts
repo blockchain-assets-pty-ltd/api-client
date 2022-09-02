@@ -43,14 +43,18 @@ type APIResponse = {
 
 export class BCA_API_Client {
     private apiUrl: string
+    private authToken?: string
     private signingKey?: string
     private signingFunction?: Function
-    private authToken?: string
-
-    constructor(apiUrl: string, { signingKey, signingFunction }: { signingKey?: string, signingFunction?: Function }) {
+    private autoRequestNewAuthToken: boolean
+    
+    constructor(apiUrl: string, { authToken, signingKey, signingFunction }: { authToken?: string, signingKey?: string, signingFunction?: Function }) {
         this.apiUrl = apiUrl
+        this.authToken = authToken
         this.signingKey = signingKey
         this.signingFunction = signingFunction
+
+        this.autoRequestNewAuthToken = !!signingKey
     }
 
     private async getAuthToken(): Promise<string | undefined> {
@@ -65,14 +69,16 @@ export class BCA_API_Client {
             }
         }
 
-        // No valid auth token - request new one.
-        const token = (await this.submitSignedAuthRequest()).body.token
-        if (!token) {
-            throw new Error("Failed to obtain new auth token.")
-        }
-        else {
-            this.authToken = token
-            return this.authToken
+        // If possible, request a new token.
+        if (this.autoRequestNewAuthToken) {
+            const token = (await this.submitSignedAuthRequest()).body.token
+            if (!token) {
+                throw new Error("Failed to obtain new auth token.")
+            }
+            else {
+                this.authToken = token
+                return this.authToken
+            }
         }
     }
 
