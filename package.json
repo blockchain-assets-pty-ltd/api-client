@@ -1,0 +1,32 @@
+{
+  "name": "@blockchain-assets/api-client",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mycoolfin/bca-api-client.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mycoolfin/bca-api-client/issues"
+  },
+  "homepage": "https://github.com/mycoolfin/bca-api-client#readme",
+  "description": "",
+  "dependencies": {
+    "@types/jsonwebtoken": "^8.5.9",
+    "jsonwebtoken": "^8.5.1",
+    "web3": "^1.7.5"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.2"
+  }
+}
