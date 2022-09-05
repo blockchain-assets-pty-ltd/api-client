@@ -20,8 +20,8 @@ const ENDPOINTS = {
     CLIENTS: "/v1/clients",
     CLIENT: (clientId: string | number) => `/v1/clients/${clientId}`,
     ACCOUNTS_FOR_CLIENT: (clientId: string | number) => `/v1/clients/${clientId}/registered_accounts`,
-    UNIT_PRICE: "/v1/fund_metrics/unit_price",
-    AUM: "/v1/fund_metrics/aum",
+    HISTORICAL_FUND_METRICS: "/v1/fund_metrics/historical",
+    RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
@@ -176,12 +176,12 @@ export class BCA_API_Client {
         return await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
     }
 
-    getUnitPriceHistory = async (sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.UNIT_PRICE, { method: "GET", queryParams: { sampleMode, startDate, endDate }, auth: true })
+    getHistoricalFundMetrics = async (startDate: string, endDate: string): Promise<APIResponse> => {
+        return await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
     }
 
-    getAUMHistory = async (sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.AUM, { method: "GET", queryParams: { sampleMode, startDate, endDate }, auth: true })
+    getRecentFundMetrics = async (startDate: string, endDate: string): Promise<APIResponse> => {
+        return await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
     }
 
     getInvestorPortalAccessLog = async (startDate: string, endDate: string): Promise<APIResponse> => {
