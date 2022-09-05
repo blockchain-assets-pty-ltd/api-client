@@ -57,7 +57,7 @@ export class BCA_API_Client {
         this.autoRequestNewAuthToken = !!signingKey
     }
 
-    private async getAuthToken(): Promise<string | undefined> {
+    private getAuthToken = async (): Promise<string | undefined> => {
         // Check if valid auth token is cached.
         if (this.authToken) {
             const decoded = jwt.decode(this.authToken, { json: true })
@@ -82,7 +82,7 @@ export class BCA_API_Client {
         }
     }
 
-    private async signMessage(message: string): Promise<string> {
+    private signMessage = async (message: string): Promise<string> => {
         if (this.signingFunction) {
             return await this.signingFunction(message)
         }
@@ -94,7 +94,7 @@ export class BCA_API_Client {
         }
     }
 
-    private async fetchBase(endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> {
+    private fetchBase = async (endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> => {
         const { method, auth, queryParams, payload, signed } = fetchOptions
         const bodyString = signed ? JSON.stringify({ endpoint: `${method} ${endpoint}`, payload, date: new Date() }, null, 4) : null
         const headers = {
@@ -113,94 +113,94 @@ export class BCA_API_Client {
             }))
     }
 
-    private async submitSignedAuthRequest(): Promise<APIResponse> {
+    private submitSignedAuthRequest = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, {
             method: "POST",
             signed: true
         })
     }
 
-    public async getEmailChallenge(email: string): Promise<APIResponse> {
+    getEmailChallenge = async (email: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.EMAIL_CHALLENGE, { method: "GET", queryParams: { email } })
     }
 
-    public async submitEmailChallenge(challenge: string): Promise<APIResponse> {
+    submitEmailChallenge = async (challenge: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
     }
 
-    public async getAdministrators(): Promise<APIResponse> {
+    getAdministrators = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
     }
 
-    public async getAdministratorInfo(adminId: string | number): Promise<APIResponse> {
+    getAdministratorInfo = async (adminId: string | number): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
     }
 
-    public async getAssets(): Promise<APIResponse> {
+    getAssets = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
     }
 
-    public async getAssetSettings(): Promise<APIResponse> {
+    getAssetSettings = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
     }
 
-    public async getAssetPrices(): Promise<APIResponse> {
+    getAssetPrices = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
     }
 
-    public async getAssetBalances(): Promise<APIResponse> {
+    getAssetBalances = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
     }
 
-    public async getAssetSources(): Promise<APIResponse> {
+    getAssetSources = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
     }
 
-    public async getUnitHoldersRegister(): Promise<APIResponse> {
+    getUnitHoldersRegister = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
     }
 
-    public async getAccounts(): Promise<APIResponse> {
+    getAccounts = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
     }
 
-    public async getClientsForAccount(accountId: string | number): Promise<APIResponse> {
+    getClientsForAccount = async (accountId: string | number): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
     }
 
-    public async getClients(): Promise<APIResponse> {
+    getClients = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
     }
 
-    public async getAccountsForClient(clientId: string | number): Promise<APIResponse> {
+    getAccountsForClient = async (clientId: string | number): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
     }
 
-    public async getUnitPriceHistory(sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> {
+    getUnitPriceHistory = async (sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.UNIT_PRICE, { method: "GET", queryParams: { sampleMode, startDate, endDate }, auth: true })
     }
 
-    public async getAUMHistory(sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> {
+    getAUMHistory = async (sampleMode: string, startDate: string, endDate: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.AUM, { method: "GET", queryParams: { sampleMode, startDate, endDate }, auth: true })
     }
 
-    public async getInvestorPortalAccessLog(startDate: string, endDate: string): Promise<APIResponse> {
+    getInvestorPortalAccessLog = async (startDate: string, endDate: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
     }
 
-    public async getInvestorPortalOptions(): Promise<APIResponse> {
+    getInvestorPortalOptions = async (): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
     }
 
-    public async getModificationEventLog(startDate: string, endDate: string): Promise<APIResponse> {
+    getModificationEventLog = async (startDate: string, endDate: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
     }
 
-    public async getFeeCalculation(valuationDate: Date, aum: string): Promise<APIResponse> {
+    getFeeCalculation = async (valuationDate: Date, aum: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate, aum }, auth: true })
     }
 
-    public async updateAssetSettingsForAsset(assetName: string, assetSymbol: string, manualBalance: number, manualAUDPrice: number): Promise<APIResponse> {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualAUDPrice: number): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualAUDPrice },
@@ -208,7 +208,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async createClient(email: string, firstName: string, lastName: string): Promise<APIResponse> {
+    createClient = async (email: string, firstName: string, lastName: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CLIENTS, {
             method: "POST",
             payload: { email, firstName, lastName },
@@ -216,7 +216,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async updateClient(clientId: string | number, email: string, firstName: string, lastName: string): Promise<APIResponse> {
+    updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
             method: "PUT",
             payload: { email, firstName, lastName },
@@ -224,7 +224,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async createAccount(accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
@@ -232,7 +232,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async updateAccount(accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> {
+    updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
@@ -240,7 +240,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async updateClientsForAccount(accountId: string | number, clientIds: string[] | number[]): Promise<APIResponse> {
+    updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
             method: "PUT",
             payload: { clientIds },
@@ -248,7 +248,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async createUnitHoldersRegisterEntry(date: Date, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<APIResponse> {
+    createUnitHoldersRegisterEntry = async (date: Date, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
             payload: { date, accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
@@ -256,7 +256,7 @@ export class BCA_API_Client {
         })
     }
 
-    public async updateInvestorPortalOptions(maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<APIResponse> {
+    updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<APIResponse> => {
         return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
