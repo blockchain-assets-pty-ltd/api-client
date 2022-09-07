@@ -22,6 +22,7 @@
   "homepage": "https://github.com/mycoolfin/bca-api-client#readme",
   "description": "",
   "dependencies": {
+    "@blockchain-assets/data-types": "github:mycoolfin/bca-data-types",
     "@types/jsonwebtoken": "^8.5.9",
     "jsonwebtoken": "^8.5.1",
     "web3": "^1.7.5"

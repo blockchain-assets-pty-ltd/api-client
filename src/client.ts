@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken"
 import { signMessageWithEthereumPrivateKey } from "./signing"
+import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry } from "@blockchain-assets/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -41,13 +42,27 @@ type APIResponse = {
     body: Record<string, any>
 }
 
+type StatusResponse = {
+    status: number
+}
+
+type TokenResponse = {
+    status: number,
+    token?: string
+}
+
+type DataResponse<T> = {
+    status: number,
+    data?: T
+}
+
 export class BCA_API_Client {
     private apiUrl: string
     private authToken?: string
     private signingKey?: string
     private signingFunction?: Function
     private autoRequestNewAuthToken: boolean
-    
+
     constructor(apiUrl: string, { authToken, signingKey, signingFunction }: { authToken?: string, signingKey?: string, signingFunction?: Function }) {
         this.apiUrl = apiUrl
         this.authToken = authToken
@@ -71,7 +86,7 @@ export class BCA_API_Client {
 
         // If possible, request a new token.
         if (this.autoRequestNewAuthToken) {
-            const token = (await this.submitSignedAuthRequest()).body.token
+            const token = (await this.submitSignedAuthRequest()).token
             if (!token) {
                 throw new Error("Failed to obtain new auth token.")
             }
@@ -113,154 +128,190 @@ export class BCA_API_Client {
             }))
     }
 
-    private submitSignedAuthRequest = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, {
-            method: "POST",
-            signed: true
-        })
+    submitSignedAuthRequest = async (): Promise<TokenResponse> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, { method: "POST", signed: true })
+        return { status, token: body.token }
     }
 
-    getEmailChallenge = async (email: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.EMAIL_CHALLENGE, { method: "GET", queryParams: { email } })
+    getEmailChallenge = async (email: string): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.EMAIL_CHALLENGE, { method: "GET", queryParams: { email } })
+        return { status }
     }
 
-    submitEmailChallenge = async (challenge: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
+    submitEmailChallenge = async (challenge: string): Promise<TokenResponse> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
+        return { status, token: body.token }
     }
 
-    getAdministrators = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
+    getAdministrators = async (): Promise<DataResponse<Administrator[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAdministratorInfo = async (adminId: string | number): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
+    getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAssets = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
+    getAssets = async (): Promise<DataResponse<Asset[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAssetSettings = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
+    getAssetSettings = async (): Promise<DataResponse<AssetSettings[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAssetPrices = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
+    getAssetPrices = async (): Promise<DataResponse<AssetPrice[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAssetBalances = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
+    getAssetBalances = async (): Promise<DataResponse<AssetBalance[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getAssetSources = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
+    getAssetSources = async (): Promise<DataResponse<AssetSource[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
+        return { status, data: body.data }
     }
 
-    getUnitHoldersRegister = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
+    getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getAccounts = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
+    getAccounts = async (): Promise<DataResponse<Account[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getClientsForAccount = async (accountId: string | number): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+    getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getClients = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
+    getClients = async (): Promise<DataResponse<Client>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getAccountsForClient = async (clientId: string | number): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
+    getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getHistoricalFundMetrics = async (startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getHistoricalFundMetrics = async (startDate: string, endDate: string): Promise<DataResponse<FundMetricsEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+        return { status, data: body.data }
+
     }
 
-    getRecentFundMetrics = async (startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getRecentFundMetrics = async (startDate: string, endDate: string): Promise<DataResponse<FundMetricsEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+        return { status, data: body.data }
+
     }
 
-    getInvestorPortalAccessLog = async (startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getInvestorPortalAccessLog = async (startDate: string, endDate: string): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+        return { status, data: body.data }
+
     }
 
-    getInvestorPortalOptions = async (): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
+    getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
+        return { status, data: body.data }
+
     }
 
-    getModificationEventLog = async (startDate: string, endDate: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getModificationEventLog = async (startDate: string, endDate: string): Promise<DataResponse<ModificationLogEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+        return { status, data: body.data }
+
     }
 
-    getFeeCalculation = async (valuationDate: Date, aum: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate, aum }, auth: true })
+    getFeeCalculation = async (valuationDate: Date, aum: string): Promise<DataResponse<FeeCalculation>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate, aum }, auth: true })
+        return { status, data: body.data }
     }
 
-    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualAUDPrice: number): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualAUDPrice: number): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualAUDPrice },
             signed: true
         })
+        return { status }
     }
 
-    createClient = async (email: string, firstName: string, lastName: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CLIENTS, {
+    createClient = async (email: string, firstName: string, lastName: string): Promise<DataResponse<number>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, {
             method: "POST",
             payload: { email, firstName, lastName },
             signed: true
         })
+        return { status, data: body.data }
     }
 
-    updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
+    updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
             method: "PUT",
             payload: { email, firstName, lastName },
             signed: true
         })
+        return { status }
     }
 
-    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ACCOUNTS, {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<DataResponse<number>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
+        return { status, data: body.data }
     }
 
-    updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
+    updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
+        return { status }
     }
 
-    updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
+    updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
             method: "PUT",
             payload: { clientIds },
             signed: true
         })
+        return { status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: Date, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
+    createUnitHoldersRegisterEntry = async (date: Date, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<number>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
             payload: { date, accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
             signed: true
         })
+        return { status, data: body.data }
     }
 
-    updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<APIResponse> => {
-        return await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
+    updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
             signed: true
         })
+        return { status }
     }
 }
