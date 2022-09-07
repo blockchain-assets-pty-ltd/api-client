@@ -271,7 +271,7 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createClient = async (email: string, firstName: string, lastName: string): Promise<DataResponse<number>> => {
+    createClient = async (email: string, firstName: string, lastName: string): Promise<DataResponse<Client>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, {
             method: "POST",
             payload: { email, firstName, lastName },
@@ -289,7 +289,7 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<DataResponse<number>> => {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<DataResponse<Account>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
@@ -316,7 +316,7 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<number>> => {
+    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<UnitHoldersRegisterEntry>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
             payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
