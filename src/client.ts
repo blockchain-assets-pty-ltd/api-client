@@ -323,10 +323,10 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<UnitHoldersRegisterEntry>> => {
+    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number ): Promise<DataResponse<UnitHoldersRegisterEntry>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
-            payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
+            payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice },
             signed: true
         })
         return { status, data: body.data }
