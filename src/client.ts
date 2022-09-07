@@ -252,7 +252,7 @@ export class BCA_API_Client {
 
     }
 
-    getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions[]>> => {
+    getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
         return { status, data: body.data }
 
