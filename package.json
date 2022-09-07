@@ -24,7 +24,9 @@
   "dependencies": {
     "@blockchain-assets/data-types": "github:mycoolfin/bca-data-types",
     "@types/jsonwebtoken": "^8.5.9",
+    "@types/luxon": "^3.0.1",
     "jsonwebtoken": "^8.5.1",
+    "luxon": "^3.0.3",
     "web3": "^1.7.5"
   },
   "devDependencies": {

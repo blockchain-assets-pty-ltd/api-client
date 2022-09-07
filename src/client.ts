@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken"
+import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
 import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry } from "@blockchain-assets/data-types"
 
@@ -56,6 +57,24 @@ type DataResponse<T> = {
     data?: T
 }
 
+const toISO = (date: string | Date | DateTime): string => {
+    if (date instanceof Date) {
+        return date.toISOString()
+    }
+    else if (date instanceof DateTime) {
+        return date.toUTC().toISO()
+    }
+    else {
+        const dateTime = DateTime.fromJSDate(new Date(date))
+        if (dateTime.isValid) {
+            return dateTime.toUTC().toISO()
+        }
+        else {
+            throw new Error(`The provided value could not be parsed to a valid date: '${date}'`)
+        }
+    }
+}
+
 export class BCA_API_Client {
     private apiUrl: string
     private authToken?: string
@@ -76,7 +95,7 @@ export class BCA_API_Client {
         // Check if valid auth token is cached.
         if (this.authToken) {
             const decoded = jwt.decode(this.authToken, { json: true })
-            if (decoded && decoded.exp && decoded.exp * 1000 > Date.now()) {
+            if (decoded && decoded.exp && DateTime.fromSeconds(decoded.exp) > DateTime.now()) {
                 return this.authToken
             }
             else {
@@ -111,7 +130,7 @@ export class BCA_API_Client {
 
     private fetchBase = async (endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> => {
         const { method, auth, queryParams, payload, signed } = fetchOptions
-        const bodyString = signed ? JSON.stringify({ endpoint: `${method} ${endpoint}`, payload, date: new Date() }, null, 4) : null
+        const bodyString = signed ? JSON.stringify({ endpoint: `${method} ${endpoint}`, payload, date: DateTime.now().toUTC().toISO() }, null, 4) : null
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
             ...(bodyString && { "Content-Type": "application/json" }),
@@ -208,20 +227,20 @@ export class BCA_API_Client {
 
     }
 
-    getHistoricalFundMetrics = async (startDate: string, endDate: string): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { status, data: body.data }
 
     }
 
-    getRecentFundMetrics = async (startDate: string, endDate: string): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { status, data: body.data }
 
     }
 
-    getInvestorPortalAccessLog = async (startDate: string, endDate: string): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { status, data: body.data }
 
     }
@@ -232,14 +251,14 @@ export class BCA_API_Client {
 
     }
 
-    getModificationEventLog = async (startDate: string, endDate: string): Promise<DataResponse<ModificationLogEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate, endDate }, auth: true })
+    getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { status, data: body.data }
 
     }
 
-    getFeeCalculation = async (valuationDate: Date, aum: string): Promise<DataResponse<FeeCalculation>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate, aum }, auth: true })
+    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: string): Promise<DataResponse<FeeCalculation>> => {
+        const { status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         return { status, data: body.data }
     }
 
@@ -297,10 +316,10 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: Date, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<number>> => {
+    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number, audInOut: number): Promise<DataResponse<number>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
-            payload: { date, accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
+            payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice, audInOut },
             signed: true
         })
         return { status, data: body.data }
