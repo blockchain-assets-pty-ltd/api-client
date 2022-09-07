@@ -141,10 +141,17 @@ export class BCA_API_Client {
             headers,
             body: bodyString
         })
-            .then(async res => ({
-                status: res.status,
-                body: res.ok ? await res.json() : {}
-            }))
+            .then(async res => {
+                let bodyObject: Record<string, any> = {}
+                if (res.ok) {
+                    try { bodyObject = await res.json() }
+                    catch { }
+                }
+                return {
+                    status: res.status,
+                    body: bodyObject
+                }
+            })
     }
 
     submitSignedAuthRequest = async (): Promise<TokenResponse> => {
