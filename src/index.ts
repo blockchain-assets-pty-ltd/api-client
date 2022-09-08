@@ -1,2 +1,3 @@
 export { BCA_API_Client } from "./client"
-export * from "@blockchain-assets/data-types"
+import type * as DataTypes from "@blockchain-assets/data-types"
+export type { DataTypes }
