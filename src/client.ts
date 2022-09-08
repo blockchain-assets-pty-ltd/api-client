@@ -369,9 +369,10 @@ export class BCA_API_Client {
         return { status }
     }
 
-    deleteAssetBalance = async (assetName: string): Promise<DataResponse<StatusResponse>> => {
+    deleteAssetBalance = async (assetName: string, sourceId: number): Promise<DataResponse<StatusResponse>> => {
         const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
             method: "DELETE",
+            payload: { sourceId },
             signed: true
         })
         return { status }
