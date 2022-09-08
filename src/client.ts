@@ -41,20 +41,24 @@ type FetchOptions = {
 }
 
 type APIResponse = {
+    ok: boolean,
     status: number,
     body: Record<string, any>
 }
 
 type StatusResponse = {
+    ok: boolean,
     status: number
 }
 
 type TokenResponse = {
+    ok: boolean,
     status: number,
     token?: string
 }
 
 type DataResponse<T> = {
+    ok: boolean,
     status: number,
     data?: T
 }
@@ -150,6 +154,7 @@ export class BCA_API_Client {
                     catch { }
                 }
                 return {
+                    ok: res.ok,
                     status: res.status,
                     body: bodyObject
                 }
@@ -157,242 +162,242 @@ export class BCA_API_Client {
     }
 
     submitSignedAuthRequest = async (): Promise<TokenResponse> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, { method: "POST", signed: true })
-        return { status, token: body.token }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, { method: "POST", signed: true })
+        return { ok, status, token: body.token }
     }
 
     getEmailChallenge = async (email: string): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.EMAIL_CHALLENGE, { method: "GET", queryParams: { email } })
-        return { status }
+        const { ok, status } = await this.fetchBase(ENDPOINTS.EMAIL_CHALLENGE, { method: "GET", queryParams: { email } })
+        return { ok, status }
     }
 
     submitEmailChallenge = async (challenge: string): Promise<TokenResponse> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
-        return { status, token: body.token }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
+        return { ok, status, token: body.token }
     }
 
     getAdministrators = async (): Promise<DataResponse<Administrator[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAssets = async (): Promise<DataResponse<Asset[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAssetSettings = async (): Promise<DataResponse<AssetSettings[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAssetPrices = async (): Promise<DataResponse<AssetPrice[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAssetBalances = async (): Promise<DataResponse<AssetBalance[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAssetSources = async (): Promise<DataResponse<AssetSource[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getClients = async (): Promise<DataResponse<Client>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return { ok, status, data: body.data }
 
     }
 
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
-        return { status, data: body.data }
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
+        return { ok, status, data: body.data }
     }
 
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualPrice: number): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualPrice },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createClient = async (email: string, firstName: string, lastName: string): Promise<DataResponse<Client>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, {
             method: "POST",
             payload: { email, firstName, lastName },
             signed: true
         })
-        return { status, data: body.data }
+        return { ok, status, data: body.data }
     }
 
     updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
             method: "PUT",
             payload: { email, firstName, lastName },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<DataResponse<Account>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
-        return { status, data: body.data }
+        return { ok, status, data: body.data }
     }
 
     updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
             method: "PUT",
             payload: { clientIds },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number ): Promise<DataResponse<UnitHoldersRegisterEntry>> => {
-        const { status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
             payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice },
             signed: true
         })
-        return { status, data: body.data }
+        return { ok, status, data: body.data }
     }
 
     updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createAssetPrice = async (assetName: string, price: number): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { price },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     deleteAssetPrice = async (assetName: string): Promise<DataResponse<StatusResponse>> => {
-        const { status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
             method: "DELETE",
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createAssetBalance = async (assetName: string, sourceId: number, balance: number): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { sourceId, balance },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     deleteAssetBalance = async (assetName: string, sourceId: number): Promise<DataResponse<StatusResponse>> => {
-        const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
             method: "DELETE",
             payload: { sourceId },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createHistoricalFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
             method: "PUT",
             payload: { date: toISO(date), unitPrice, aum },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 
     createRecentFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
-        const { status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
             method: "PUT",
             payload: { date: toISO(date), unitPrice, aum },
             signed: true
         })
-        return { status }
+        return { ok, status }
     }
 }
