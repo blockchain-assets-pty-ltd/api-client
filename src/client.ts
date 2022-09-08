@@ -13,7 +13,9 @@ const ENDPOINTS = {
     ASSET_SETTINGS: "/v1/assets/settings",
     SETTINGS_FOR_ASSET: (assetName: string) => `/v1/assets/settings/${assetName}`,
     PRICES: "/v1/assets/prices",
+    PRICE_FOR_ASSET: (assetName: string) => `/assets/prices/${assetName}`,
     BALANCES: "/v1/assets/balances",
+    BALANCE_FOR_ASSET: (assetName: string) => `/assets/balances/${assetName}`,
     SOURCES: "/v1/assets/sources",
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
     ACCOUNTS: "/v1/accounts",
@@ -269,10 +271,10 @@ export class BCA_API_Client {
         return { status, data: body.data }
     }
 
-    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualAUDPrice: number): Promise<StatusResponse> => {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualPrice: number): Promise<StatusResponse> => {
         const { status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
-            payload: { assetName, assetSymbol, manualBalance, manualAUDPrice },
+            payload: { assetName, assetSymbol, manualBalance, manualPrice },
             signed: true
         })
         return { status }
@@ -336,6 +338,58 @@ export class BCA_API_Client {
         const { status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
+            signed: true
+        })
+        return { status }
+    }
+
+    createAssetPrice = async (assetName: string, price: number): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
+            method: "PUT",
+            payload: { price },
+            signed: true
+        })
+        return { status }
+    }
+
+    deleteAssetPrice = async (assetName: string): Promise<DataResponse<StatusResponse>> => {
+        const { status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
+            method: "DELETE",
+            signed: true
+        })
+        return { status }
+    }
+
+    createAssetBalance = async (assetName: string, balance: number): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
+            method: "PUT",
+            payload: { balance },
+            signed: true
+        })
+        return { status }
+    }
+
+    deleteAssetBalance = async (assetName: string): Promise<DataResponse<StatusResponse>> => {
+        const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
+            method: "DELETE",
+            signed: true
+        })
+        return { status }
+    }
+
+    createHistoricalFundMetricsEntry = async (date: DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
+            method: "PUT",
+            payload: { date, unitPrice, aum },
+            signed: true
+        })
+        return { status }
+    }
+
+    createRecentFundMetricsEntry = async (date: DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+        const { status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
+            method: "PUT",
+            payload: { date, unitPrice, aum },
             signed: true
         })
         return { status }
