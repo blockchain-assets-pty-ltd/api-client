@@ -360,10 +360,10 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createAssetBalance = async (assetName: string, balance: number): Promise<StatusResponse> => {
+    createAssetBalance = async (assetName: string, sourceId: number, balance: number): Promise<StatusResponse> => {
         const { status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
             method: "PUT",
-            payload: { balance },
+            payload: { sourceId, balance },
             signed: true
         })
         return { status }
