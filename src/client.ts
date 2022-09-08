@@ -266,7 +266,7 @@ export class BCA_API_Client {
 
     }
 
-    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: string): Promise<DataResponse<FeeCalculation>> => {
+    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
         const { status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         return { status, data: body.data }
     }
@@ -378,19 +378,19 @@ export class BCA_API_Client {
         return { status }
     }
 
-    createHistoricalFundMetricsEntry = async (date: DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+    createHistoricalFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
         const { status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
             method: "PUT",
-            payload: { date, unitPrice, aum },
+            payload: { date: toISO(date), unitPrice, aum },
             signed: true
         })
         return { status }
     }
 
-    createRecentFundMetricsEntry = async (date: DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+    createRecentFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
         const { status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
             method: "PUT",
-            payload: { date, unitPrice, aum },
+            payload: { date: toISO(date), unitPrice, aum },
             signed: true
         })
         return { status }
