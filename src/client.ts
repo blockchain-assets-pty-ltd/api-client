@@ -291,7 +291,18 @@ export class BCA_API_Client {
         const data: FeeCalculation = {
             ...body.data,
             valuationDate: fromISO(body.data.valuationDate),
-            vintages: body.data.vintages.map((item: any) => ({ ...item, creationDate: fromISO(item.creationDate) }))
+            vintages: body.data.vintages.map((v: any) => ({
+                ...v,
+                creationDate: fromISO(v.creationDate),
+                fcEntries: v.fcEntries.map((fc: any) => ({
+                    ...fc,
+                    date: fromISO(fc.date)
+                })),
+                uhrEntries: v.fcEntries.map((uhr: any) => ({
+                    ...uhr,
+                    date: fromISO(uhr.date)
+                }))
+            }))
         }
         return { ok, status, data }
     }
