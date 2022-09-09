@@ -8,22 +8,22 @@ const ENDPOINTS = {
     EMAIL_CHALLENGE: "/v1/token/email_challenge",
     VERIFY_EMAIL: "/v1/token/verify_email",
     ADMINISTRATORS: "/v1/administrators",
-    ADMINISTRATOR: (adminId: string | number) => `/v1/administrators/${adminId}`,
+    ADMINISTRATOR: (adminId: number) => `/v1/administrators/${adminId}`,
     ASSETS: "/v1/assets",
     ASSET_SETTINGS: "/v1/assets/settings",
-    SETTINGS_FOR_ASSET: (assetName: string) => `/v1/assets/settings/${assetName}`,
+    SETTINGS_FOR_ASSET: (assetName: string) => `/v1/assets/settings/${encodeURIComponent(assetName)}`,
     PRICES: "/v1/assets/prices",
-    PRICE_FOR_ASSET: (assetName: string) => `/v1/assets/prices/${assetName}`,
+    PRICE_FOR_ASSET: (assetName: string) => `/v1/assets/prices/${encodeURIComponent(assetName)}`,
     BALANCES: "/v1/assets/balances",
-    BALANCE_FOR_ASSET: (assetName: string) => `/v1/assets/balances/${assetName}`,
+    BALANCE_FOR_ASSET: (assetName: string) => `/v1/assets/balances/${encodeURIComponent(assetName)}`,
     SOURCES: "/v1/assets/sources",
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
     ACCOUNTS: "/v1/accounts",
-    ACCOUNT: (accountId: string | number) => `/v1/accounts/${accountId}`,
-    CLIENTS_FOR_ACCOUNT: (accountId: string | number) => `/v1/accounts/${accountId}/registered_clients`,
+    ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
+    CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
     CLIENTS: "/v1/clients",
-    CLIENT: (clientId: string | number) => `/v1/clients/${clientId}`,
-    ACCOUNTS_FOR_CLIENT: (clientId: string | number) => `/v1/clients/${clientId}/registered_accounts`,
+    CLIENT: (clientId: number) => `/v1/clients/${clientId}`,
+    ACCOUNTS_FOR_CLIENT: (clientId: number) => `/v1/clients/${clientId}/registered_accounts`,
     HISTORICAL_FUND_METRICS: "/v1/fund_metrics/historical",
     RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
@@ -182,7 +182,7 @@ export class BCA_API_Client {
     }
 
     getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(Number(adminId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
     }
 
@@ -224,7 +224,7 @@ export class BCA_API_Client {
     }
 
     getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
 
     }
@@ -236,7 +236,7 @@ export class BCA_API_Client {
     }
 
     getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
 
     }
@@ -295,7 +295,7 @@ export class BCA_API_Client {
     }
 
     updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENT(Number(clientId)), {
             method: "PUT",
             payload: { email, firstName, lastName },
             signed: true
@@ -313,7 +313,7 @@ export class BCA_API_Client {
     }
 
     updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
@@ -322,7 +322,7 @@ export class BCA_API_Client {
     }
 
     updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { clientIds },
             signed: true
