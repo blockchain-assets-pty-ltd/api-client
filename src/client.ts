@@ -235,10 +235,14 @@ export class BCA_API_Client {
 
     }
 
-    getClients = async (): Promise<DataResponse<Client>> => {
+    getClients = async (): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
         return { ok, status, data: body.data }
+    }
 
+    getClientInfo = async (clientId: number): Promise<DataResponse<Client>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
