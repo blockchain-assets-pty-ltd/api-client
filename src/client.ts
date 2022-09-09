@@ -7,6 +7,7 @@ const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
     EMAIL_CHALLENGE: "/v1/token/email_challenge",
     VERIFY_EMAIL: "/v1/token/verify_email",
+    REFRESH: "/v1/token/refresh",
     ADMINISTRATORS: "/v1/administrators",
     ADMINISTRATOR: (adminId: number) => `/v1/administrators/${adminId}`,
     ASSETS: "/v1/assets",
@@ -173,6 +174,11 @@ export class BCA_API_Client {
 
     submitEmailChallenge = async (challenge: string): Promise<TokenResponse> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
+        return { ok, status, token: body.token }
+    }
+
+    getRefreshToken = async (): Promise<TokenResponse> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REFRESH, { method: "POST", auth: true })
         return { ok, status, token: body.token }
     }
 
