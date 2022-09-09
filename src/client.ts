@@ -294,10 +294,10 @@ export class BCA_API_Client {
             vintages: body.data.vintages.map((v: any) => ({
                 ...v,
                 creationDate: fromISO(v.creationDate),
-                fcEntries: v.fcEntries.map((fc: any) => ({
-                    ...fc,
-                    date: fromISO(fc.date)
-                })),
+                latestFcEntry: {
+                    ...v.latestFcEntry,
+                    date: fromISO(v.latestFcEntry.date)
+                },
                 uhrEntries: v.fcEntries.map((uhr: any) => ({
                     ...uhr,
                     date: fromISO(uhr.date)
