@@ -290,7 +290,7 @@ export class BCA_API_Client {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         const data: FeeCalculation = {
             ...body.data,
-            valuationDate: fromISO(body.data.date),
+            valuationDate: fromISO(body.data.valuationDate),
             vintages: body.data.vintages.map((item: any) => ({ ...item, creationDate: fromISO(item.creationDate) }))
         }
         return { ok, status, data }
