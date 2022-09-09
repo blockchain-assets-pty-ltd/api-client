@@ -89,13 +89,13 @@ export class BCA_API_Client {
     private signingFunction?: Function
     private autoRequestNewAuthToken: boolean
 
-    constructor(apiUrl: string, { authToken, signingKey, signingFunction }: { authToken?: string, signingKey?: string, signingFunction?: Function }) {
+    constructor(apiUrl: string, options: { authToken?: string, signingKey?: string, signingFunction?: Function }) {
         this.apiUrl = apiUrl
-        this.authToken = authToken
-        this.signingKey = signingKey
-        this.signingFunction = signingFunction
+        this.authToken = options?.authToken
+        this.signingKey = options?.signingKey
+        this.signingFunction = options?.signingFunction
 
-        this.autoRequestNewAuthToken = !!signingKey
+        this.autoRequestNewAuthToken = !!options?.signingKey
     }
 
     private getAuthToken = async (): Promise<string | undefined> => {
@@ -220,19 +220,16 @@ export class BCA_API_Client {
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
@@ -248,37 +245,31 @@ export class BCA_API_Client {
     getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return { ok, status, data: body.data }
-
     }
 
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
