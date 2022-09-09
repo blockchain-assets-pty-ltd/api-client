@@ -298,7 +298,7 @@ export class BCA_API_Client {
                     ...v.latestFcEntry,
                     date: fromISO(v.latestFcEntry.date)
                 },
-                uhrEntries: v.fcEntries.map((uhr: any) => ({
+                uhrEntries: v.uhrEntries.map((uhr: any) => ({
                     ...uhr,
                     date: fromISO(uhr.date)
                 }))
