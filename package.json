@@ -12,12 +12,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/blockchain-assets-pty-ltd/api-clien.git"
+    "url": "git+https://github.com/blockchain-assets-pty-ltd/api-client.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/blockchain-assets-pty-ltd/api-clien/issues"
+    "url": "https://github.com/blockchain-assets-pty-ltd/api-client/issues"
   },
   "homepage": "https://github.com/blockchain-assets-pty-ltd/api-client#readme",
   "description": "",
