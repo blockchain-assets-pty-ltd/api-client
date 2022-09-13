@@ -1,5 +1,5 @@
 {
-  "name": "@blockchain-assets/api-client",
+  "name": "@blockchain-assets-pty-ltd/api-client",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,17 +12,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mycoolfin/bca-api-client.git"
+    "url": "git+https://github.com/blockchain-assets-pty-ltd/api-clien.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mycoolfin/bca-api-client/issues"
+    "url": "https://github.com/blockchain-assets-pty-ltd/api-clien/issues"
   },
-  "homepage": "https://github.com/mycoolfin/bca-api-client#readme",
+  "homepage": "https://github.com/blockchain-assets-pty-ltd/api-client#readme",
   "description": "",
   "dependencies": {
-    "@blockchain-assets/data-types": "github:mycoolfin/bca-data-types",
+    "@blockchain-assets-pty-ltd/data-types": "github:blockchain-assets-pty-ltd/data-types",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/luxon": "^3.0.1",
     "jsonwebtoken": "^8.5.1",
