@@ -361,14 +361,13 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number): Promise<DataResponse<UnitHoldersRegisterEntry>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
+    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
             method: "POST",
             payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice },
             signed: true
         })
-        const data: UnitHoldersRegisterEntry = { ...body.data, date: fromISO(body.data.date) }
-        return { ok, status, data }
+        return { ok, status }
     }
 
     updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
