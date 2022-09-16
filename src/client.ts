@@ -291,7 +291,12 @@ export class BCA_API_Client {
 
     getInvestorPortalFundOverview = async (): Promise<DataResponse<FundOverview>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_FUND_OVERVIEW, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        const data: FundOverview = {
+            ...body.data,
+            lastUpdatedAt: fromISO(body.data.lastUpdatedAt),
+            historicalFundMetrics: body.data.historicalFundMetrics.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        }
+        return { ok, status, data }
     }
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
