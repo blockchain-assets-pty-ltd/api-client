@@ -29,6 +29,7 @@ const ENDPOINTS = {
     RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
+    INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     CALCULATE_FEES: "/v1/fees/calculate"
 }
@@ -42,26 +43,34 @@ type FetchOptions = {
 }
 
 type APIResponse = {
-    ok: boolean,
-    status: number,
+    ok: boolean
+    status: number
     body: Record<string, any>
 }
 
 type StatusResponse = {
-    ok: boolean,
+    ok: boolean
     status: number
 }
 
 type TokenResponse = {
-    ok: boolean,
-    status: number,
+    ok: boolean
+    status: number
     token?: string
 }
 
 type DataResponse<T> = {
-    ok: boolean,
-    status: number,
+    ok: boolean
+    status: number
     data: T
+}
+
+type FundOverview = {
+    lastUpdatedAt: DateTime
+    unitPrice: number
+    aum: number
+    assets: Asset[]
+    historicalFundMetrics: FundMetricsEntry[]
 }
 
 const toISO = (date: string | Date | DateTime): string => {
@@ -277,6 +286,11 @@ export class BCA_API_Client {
 
     getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
+    }
+
+    getInvestorPortalFundOverview = async (): Promise<DataResponse<FundOverview>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_FUND_OVERVIEW, { method: "GET", auth: true })
         return { ok, status, data: body.data }
     }
 
