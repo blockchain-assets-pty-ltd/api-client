@@ -218,13 +218,13 @@ export class BCA_API_Client {
 
     getAssetPrices = async (): Promise<DataResponse<AssetPrice[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
-        const data: AssetPrice[] = body.data.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
+        const data: AssetPrice[] = body.data?.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
         return { ok, status, data }
     }
 
     getAssetBalances = async (): Promise<DataResponse<AssetBalance[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
-        const data: AssetBalance[] = body.data.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
+        const data: AssetBalance[] = body.data?.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
         return { ok, status, data }
     }
 
@@ -235,13 +235,13 @@ export class BCA_API_Client {
 
     getAssetSnapshots = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AssetSnapshotsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: AssetSnapshotsEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: AssetSnapshotsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
-        const data: UnitHoldersRegisterEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
@@ -252,13 +252,13 @@ export class BCA_API_Client {
 
     getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
-        const data: Client[] = body.data.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
+        const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
         return { ok, status, data }
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
-        const data: Client[] = body.data.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
+        const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
         return { ok, status, data }
     }
 
@@ -275,19 +275,19 @@ export class BCA_API_Client {
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FundMetricsEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: FundMetricsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
     getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FundMetricsEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: FundMetricsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: InvestorPortalAccessLogEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: InvestorPortalAccessLogEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
@@ -308,7 +308,7 @@ export class BCA_API_Client {
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: ModificationLogEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        const data: ModificationLogEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
     }
 
