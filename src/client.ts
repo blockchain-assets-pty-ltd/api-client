@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
-import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry } from "@blockchain-assets-pty-ltd/data-types"
+import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry } from "@blockchain-assets-pty-ltd/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -18,6 +18,7 @@ const ENDPOINTS = {
     BALANCES: "/v1/assets/balances",
     BALANCE_FOR_ASSET: (assetName: string) => `/v1/assets/balances/${encodeURIComponent(assetName)}`,
     SOURCES: "/v1/assets/sources",
+    ASSET_SNAPSHOTS: "/v1/assets/snapshots",
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
@@ -230,6 +231,12 @@ export class BCA_API_Client {
     getAssetSources = async (): Promise<DataResponse<AssetSource[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
         return { ok, status, data: body.data }
+    }
+
+    getAssetSnapshots = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AssetSnapshotsEntry[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const data: AssetSnapshotsEntry[] = body.data.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        return { ok, status, data }
     }
 
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
@@ -446,6 +453,15 @@ export class BCA_API_Client {
         const { ok, status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
             method: "PUT",
             payload: { date: toISO(date), unitPrice, aum },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    takeSnapshotOfAssets = async (): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, {
+            method: "POST",
+            payload: {},
             signed: true
         })
         return { ok, status }
