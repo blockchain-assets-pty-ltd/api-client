@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
-import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry } from "@blockchain-assets-pty-ltd/data-types"
+import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, VintageData } from "@blockchain-assets-pty-ltd/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -32,7 +32,8 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
-    CALCULATE_FEES: "/v1/fees/calculate"
+    CALCULATE_FEES: "/v1/fees/calculate",
+    CAPITALISATIONS: "/fees/capitalisations"
 }
 
 type FetchOptions = {
@@ -332,6 +333,12 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
+    getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const data: FeeCapitalisationsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        return { ok, status, data }
+    }
+
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualPrice: number): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
@@ -462,6 +469,15 @@ export class BCA_API_Client {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, {
             method: "POST",
             payload: {},
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, {
+            method: "POST",
+            payload: { feeCapitalisationsEntries: feeCapitalisationsEntries.map((item) => ({ ...item, date: toISO(item.date) })) },
             signed: true
         })
         return { ok, status }
