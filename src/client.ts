@@ -33,7 +33,7 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     CALCULATE_FEES: "/v1/fees/calculate",
-    CAPITALISATIONS: "/fees/capitalisations"
+    CAPITALISATIONS: "/v1/fees/capitalisations"
 }
 
 type FetchOptions = {
