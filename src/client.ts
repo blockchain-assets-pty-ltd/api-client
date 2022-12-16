@@ -33,7 +33,9 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     CALCULATE_FEES: "/v1/fees/calculate",
-    CAPITALISATIONS: "/v1/fees/capitalisations"
+    CAPITALISATIONS: "/v1/fees/capitalisations",
+    MANAGEMENT_FEE_INVOICE: "/v1/fees/invoice/management_fee",
+    PERFORMANCE_FEE_INVOICE: "/v1/fees/invoice/performance_fee"
 }
 
 type FetchOptions = {
@@ -476,8 +478,26 @@ export class BCA_API_Client {
 
     createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, {
-            method: "POST",
+            method: "PUT",
             payload: { feeCapitalisationsEntries: feeCapitalisationsEntries.map((item) => ({ ...item, date: toISO(item.date) })) },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    raiseManagementFeeInvoice = async (managementFee: number, feeDate: string | Date | DateTime, isQuarterEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.MANAGEMENT_FEE_INVOICE, {
+            method: "POST",
+            payload: { managementFee, feeDate: toISO(feeDate), isQuarterEnd, unitsRedeemed },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    raisePerformanceFeeInvoice = async (performanceFee: number, feeDate: string | Date | DateTime, isFYEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.PERFORMANCE_FEE_INVOICE, {
+            method: "POST",
+            payload: { performanceFee, feeDate: toISO(feeDate), isFYEnd, unitsRedeemed },
             signed: true
         })
         return { ok, status }
