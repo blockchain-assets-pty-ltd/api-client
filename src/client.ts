@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
-import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, VintageData } from "@blockchain-assets-pty-ltd/data-types"
+import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -10,6 +10,8 @@ const ENDPOINTS = {
     REFRESH: "/v1/token/refresh",
     ADMINISTRATORS: "/v1/administrators",
     ADMINISTRATOR: (adminId: number) => `/v1/administrators/${adminId}`,
+    BOTS: "/v1/bots",
+    BOT: (botId: number) => `/v1/bots/${botId}`,
     ASSETS: "/v1/assets",
     ASSET_SETTINGS: "/v1/assets/settings",
     SETTINGS_FOR_ASSET: (assetName: string) => `/v1/assets/settings/${encodeURIComponent(assetName)}`,
@@ -206,6 +208,16 @@ export class BCA_API_Client {
 
     getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(Number(adminId)), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
+    }
+
+    getBots = async (): Promise<DataResponse<Bot[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.BOTS, { method: "GET", auth: true })
+        return { ok, status, data: body.data }
+    }
+
+    getBotInfo = async (botId: string | number): Promise<DataResponse<Bot>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.BOT(Number(botId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
     }
 
