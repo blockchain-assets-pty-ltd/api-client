@@ -1,7 +1,7 @@
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, Parcel } from "@blockchain-assets-pty-ltd/data-types"
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
-import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -22,6 +22,8 @@ const ENDPOINTS = {
     SOURCES: "/v1/assets/sources",
     ASSET_SNAPSHOTS: "/v1/assets/snapshots",
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
+    ACQUISITION: "/v1/unit_holders_register/acquisition",
+    REDEMPTION: "/v1/unit_holders_register/redemption",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
     CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
@@ -34,10 +36,8 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
-    CALCULATE_FEES: "/v1/fees/calculate",
-    CAPITALISATIONS: "/v1/fees/capitalisations",
-    MANAGEMENT_FEE_INVOICE: "/v1/fees/invoice/management_fee",
-    PERFORMANCE_FEE_INVOICE: "/v1/fees/invoice/performance_fee"
+    CALCULATE_FEES_FOR_ALL_ACCOUNTS: "/v1/fees/calculate",
+    CALCULATE_FEES_FOR_ACCOUNT: (accountId: number) => `/v1/fees/calculate/${accountId}`
 }
 
 type FetchOptions = {
@@ -265,7 +265,7 @@ export class BCA_API_Client {
         return { ok, status, data: body.data }
     }
 
-    getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
+    getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
         const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
         return { ok, status, data }
@@ -283,7 +283,7 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
+    getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
         return { ok, status, data: body.data }
     }
@@ -327,29 +327,53 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
-        const data: FeeCalculation = {
-            ...body.data,
-            valuationDate: fromISO(body.data.valuationDate),
-            vintages: body.data.vintages.map((v: any) => ({
-                ...v,
-                creationDate: fromISO(v.creationDate),
-                latestFcEntry: {
-                    ...(v.latestFcEntry && { ...v.latestFcEntry, date: fromISO(v.latestFcEntry.date) })
-                },
-                uhrEntries: v.uhrEntries.map((uhr: any) => ({
-                    ...uhr,
-                    date: fromISO(uhr.date)
+    getFeeCalculationsForAllAccounts = async (calculationDate: string | Date | DateTime, unitPrice: number): Promise<DataResponse<FeeCalculation[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES_FOR_ALL_ACCOUNTS, {
+            method: "GET",
+            queryParams: {
+                calculationDate: toISO(calculationDate),
+                unitPrice
+            },
+            auth: true
+        })
+        const data: FeeCalculation[] = body.data.map((fc: any) => ({
+            ...fc,
+            calculationDate: fromISO(fc.calculationDate),
+            parcel: {
+                ...fc.parcel,
+                creationDate: fromISO(fc.parcel.creationDate),
+                calculationDate: fromISO(fc.parcel.calculationDate),
+                reductions: fc.parcel.reductions.map((r: any) => ({
+                    ...r,
+                    date: fromISO(r.date)
                 }))
-            }))
-        }
+            }
+        }))
         return { ok, status, data }
     }
 
-    getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FeeCapitalisationsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+    getFeeCalculationsForAccount = async (calculationDate: string | Date | DateTime, unitPrice: number, accountId: number): Promise<DataResponse<FeeCalculation[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES_FOR_ACCOUNT(accountId), {
+            method: "GET",
+            queryParams: {
+                calculationDate: toISO(calculationDate),
+                unitPrice
+            },
+            auth: true
+        })
+        const data: FeeCalculation[] = body.data.map((fc: any) => ({
+            ...fc,
+            calculationDate: fromISO(fc.calculationDate),
+            parcel: {
+                ...fc.parcel,
+                creationDate: fromISO(fc.parcel.creationDate),
+                calculationDate: fromISO(fc.parcel.calculationDate),
+                reductions: fc.parcel.reductions.map((r: any) => ({
+                    ...r,
+                    date: fromISO(r.date)
+                }))
+            }
+        }))
         return { ok, status, data }
     }
 
@@ -372,7 +396,7 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
+    updateClient = async (clientId: number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENT(Number(clientId)), {
             method: "PUT",
             payload: { email, firstName, lastName },
@@ -390,7 +414,7 @@ export class BCA_API_Client {
         return { ok, status, data: body.data }
     }
 
-    updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
+    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
@@ -399,7 +423,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<StatusResponse> => {
+    updateClientsForAccount = async (accountId: number, clientIds: string[] | number[]): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { clientIds },
@@ -408,16 +432,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
-            method: "POST",
-            payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
+    updateInvestorPortalOptions = async (maintenanceMode: boolean, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
@@ -488,28 +503,19 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, {
-            method: "PUT",
-            payload: { feeCapitalisationsEntries: feeCapitalisationsEntries.map((item) => ({ ...item, date: toISO(item.date) })) },
+    performUnitAcquisition = async (acquisitionDate: string | Date | DateTime, accountId: number, acquiredUnits: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ACQUISITION, {
+            method: "POST",
+            payload: { acquisitionDate, accountId, acquiredUnits },
             signed: true
         })
         return { ok, status }
     }
 
-    raiseManagementFeeInvoice = async (managementFee: number, feeDate: string | Date | DateTime, isQuarterEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.MANAGEMENT_FEE_INVOICE, {
+    performUnitRedemption = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
             method: "POST",
-            payload: { managementFee, feeDate: toISO(feeDate), isQuarterEnd, unitsRedeemed },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    raisePerformanceFeeInvoice = async (performanceFee: number, feeDate: string | Date | DateTime, isFYEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.PERFORMANCE_FEE_INVOICE, {
-            method: "POST",
-            payload: { performanceFee, feeDate: toISO(feeDate), isFYEnd, unitsRedeemed },
+            payload: { redemptionDate, accountId, redeemedUnits },
             signed: true
         })
         return { ok, status }
