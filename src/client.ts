@@ -24,6 +24,7 @@ const ENDPOINTS = {
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
     ACQUISITION: "/v1/unit_holders_register/acquisition",
     REDEMPTION: "/v1/unit_holders_register/redemption",
+    REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
     CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
@@ -519,5 +520,14 @@ export class BCA_API_Client {
             signed: true
         })
         return { ok, status }
+    }
+
+    getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
+            method: "GET",
+            queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
+        })
+        const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        return { ok, status, data }
     }
 }
