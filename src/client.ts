@@ -506,7 +506,7 @@ export class BCA_API_Client {
     performUnitAcquisition = async (acquisitionDate: string | Date | DateTime, accountId: number, acquiredUnits: number): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACQUISITION, {
             method: "POST",
-            payload: { acquisitionDate, accountId, acquiredUnits },
+            payload: { acquisitionDate: toISO(acquisitionDate), accountId, acquiredUnits },
             signed: true
         })
         return { ok, status }
@@ -515,7 +515,7 @@ export class BCA_API_Client {
     performUnitRedemption = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
             method: "POST",
-            payload: { redemptionDate, accountId, redeemedUnits },
+            payload: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
             signed: true
         })
         return { ok, status }
