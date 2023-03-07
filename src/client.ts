@@ -523,9 +523,10 @@ export class BCA_API_Client {
     }
 
     getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REDEMPTION_PREVIEW, {
             method: "GET",
             queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
+            auth: true
         })
         const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
