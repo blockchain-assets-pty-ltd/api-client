@@ -85,16 +85,17 @@ const toISO = (date: string | Date | DateTime): string => {
         return date.toISOString()
     }
     else if (date instanceof DateTime) {
-        return date.toUTC().toISO()
+        if (date.isValid)
+            return date.toUTC().toISO()!
+        else
+            throw new Error("The provided DateTime was invalid.")
     }
     else {
         const dateTime = DateTime.fromJSDate(new Date(date))
-        if (dateTime.isValid) {
-            return dateTime.toUTC().toISO()
-        }
-        else {
+        if (dateTime.isValid)
+            return dateTime.toUTC().toISO()!
+        else
             throw new Error(`The provided value could not be parsed to a valid date: '${date}'`)
-        }
     }
 }
 
@@ -378,7 +379,7 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualPrice: number): Promise<StatusResponse> => {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: number | null, manualPrice: number | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualPrice },
