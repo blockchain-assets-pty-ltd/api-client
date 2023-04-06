@@ -38,7 +38,8 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     CALCULATE_FEES_FOR_ALL_ACCOUNTS: "/v1/fees/calculate",
-    CALCULATE_FEES_FOR_ACCOUNT: (accountId: number) => `/v1/fees/calculate/${accountId}`
+    CALCULATE_FEES_FOR_ACCOUNT: (accountId: number) => `/v1/fees/calculate/${accountId}`,
+    GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`
 }
 
 type FetchOptions = {
@@ -264,7 +265,8 @@ export class BCA_API_Client {
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
+        return { ok, status, data }
     }
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
@@ -287,7 +289,8 @@ export class BCA_API_Client {
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
+        return { ok, status, data }
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
@@ -413,7 +416,8 @@ export class BCA_API_Client {
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
-        return { ok, status, data: body.data }
+        const data = { ...body.data, initialInvestmentDate: fromISO(body.data.initialInvestmentDate) }
+        return { ok, status, data }
     }
 
     updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
@@ -531,5 +535,14 @@ export class BCA_API_Client {
         })
         const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
         return { ok, status, data }
+    }
+
+    generateAccountStatement = async (financialYear: number, accountId: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.GENERATE_ACCOUNT_STATEMENT(accountId), {
+            method: "POST",
+            queryParams: { financialYear },
+            auth: true
+        })
+        return { ok, status }
     }
 }
