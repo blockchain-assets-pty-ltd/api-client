@@ -41,6 +41,7 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
+    AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
     GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`
 }
 
@@ -540,6 +541,11 @@ export class BCA_API_Client {
             signed: true
         })
         return { ok, status }
+    }
+
+    getAvailableStatements = async (accountId: number): Promise<DataResponse<{ [statementType: string]: number[] }>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.AVAILABLE_STATEMENTS(accountId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
     }
 
     generateAccountStatement = async (financialYear: number, accountId: number): Promise<StatusResponse> => {
