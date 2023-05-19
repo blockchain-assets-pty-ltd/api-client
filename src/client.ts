@@ -42,7 +42,8 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
-    GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`
+    GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
+    GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`
 }
 
 type FetchOptions = {
@@ -548,8 +549,19 @@ export class BCA_API_Client {
         return { ok, status, data: body.data }
     }
 
-    generateAccountStatement = async (financialYear: number, accountId: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.GENERATE_ACCOUNT_STATEMENT(accountId), {
+    requestStatement = async (statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<StatusResponse> => {
+        let endpoint
+        switch (statementType) {
+            case "Account Statement":
+                endpoint = ENDPOINTS.GENERATE_ACCOUNT_STATEMENT
+                break
+            case "Tax Statement":
+                endpoint = ENDPOINTS.GENERATE_TAX_STATEMENT
+                break
+            default:
+                throw new Error("Unknown statement type.")
+        }
+        const { ok, status } = await this.fetchBase(endpoint(accountId), {
             method: "POST",
             queryParams: { financialYear },
             auth: true
