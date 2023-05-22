@@ -1,6 +1,6 @@
 {
   "name": "@blockchain-assets-pty-ltd/api-client",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -22,7 +22,7 @@
   "homepage": "https://github.com/blockchain-assets-pty-ltd/api-client#readme",
   "description": "",
   "dependencies": {
-    "@blockchain-assets-pty-ltd/data-types": "github:blockchain-assets-pty-ltd/data-types#lessons_learned",
+    "@blockchain-assets-pty-ltd/data-types": "github:blockchain-assets-pty-ltd/data-types",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/luxon": "^3.0.1",
     "jsonwebtoken": "^9.0.0",
