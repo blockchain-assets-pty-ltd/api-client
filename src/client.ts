@@ -1,7 +1,7 @@
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
-import { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -22,6 +22,13 @@ const ENDPOINTS = {
     SOURCES: "/v1/assets/sources",
     ASSET_SNAPSHOTS: "/v1/assets/snapshots",
     UNIT_HOLDERS_REGISTER: "/v1/unit_holders_register",
+    ACQUISITION: "/v1/unit_holders_register/acquisition",
+    REDEMPTION: "/v1/unit_holders_register/redemption",
+    REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
+    CALCULATE_FEES: "/v1/fees/calculate",
+    CAPITALISATIONS: "/v1/fees/capitalisations",
+    MANAGEMENT_FEE_INVOICE: "/fees/invoice/management_fee",
+    PERFORMANCE_FEE_INVOICE: "/fees/invoice/performance_fee",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
     CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
@@ -34,10 +41,9 @@ const ENDPOINTS = {
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
-    CALCULATE_FEES: "/v1/fees/calculate",
-    CAPITALISATIONS: "/v1/fees/capitalisations",
-    MANAGEMENT_FEE_INVOICE: "/v1/fees/invoice/management_fee",
-    PERFORMANCE_FEE_INVOICE: "/v1/fees/invoice/performance_fee"
+    AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
+    GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
+    GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`
 }
 
 type FetchOptions = {
@@ -84,16 +90,17 @@ const toISO = (date: string | Date | DateTime): string => {
         return date.toISOString()
     }
     else if (date instanceof DateTime) {
-        return date.toUTC().toISO()
+        if (date.isValid)
+            return date.toUTC().toISO()!
+        else
+            throw new Error("The provided DateTime was invalid.")
     }
     else {
         const dateTime = DateTime.fromJSDate(new Date(date))
-        if (dateTime.isValid) {
-            return dateTime.toUTC().toISO()
-        }
-        else {
+        if (dateTime.isValid)
+            return dateTime.toUTC().toISO()!
+        else
             throw new Error(`The provided value could not be parsed to a valid date: '${date}'`)
-        }
     }
 }
 
@@ -262,10 +269,11 @@ export class BCA_API_Client {
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
+        return { ok, status, data }
     }
 
-    getClientsForAccount = async (accountId: string | number): Promise<DataResponse<Client[]>> => {
+    getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
         const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
         return { ok, status, data }
@@ -283,9 +291,10 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    getAccountsForClient = async (clientId: string | number): Promise<DataResponse<Account[]>> => {
+    getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
+        return { ok, status, data }
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
@@ -353,7 +362,7 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string, manualBalance: number, manualPrice: number): Promise<StatusResponse> => {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: number | null, manualPrice: number | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualPrice },
@@ -372,7 +381,7 @@ export class BCA_API_Client {
         return { ok, status, data }
     }
 
-    updateClient = async (clientId: string | number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
+    updateClient = async (clientId: number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENT(Number(clientId)), {
             method: "PUT",
             payload: { email, firstName, lastName },
@@ -387,10 +396,11 @@ export class BCA_API_Client {
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
-        return { ok, status, data: body.data }
+        const data = { ...body.data, initialInvestmentDate: fromISO(body.data.initialInvestmentDate) }
+        return { ok, status, data }
     }
 
-    updateAccount = async (accountId: string | number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
+    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country },
@@ -399,7 +409,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    updateClientsForAccount = async (accountId: string | number, clientIds: string[] | number[]): Promise<StatusResponse> => {
+    updateClientsForAccount = async (accountId: number, clientIds: string[] | number[]): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), {
             method: "PUT",
             payload: { clientIds },
@@ -408,16 +418,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createUnitHoldersRegisterEntry = async (date: string | Date | DateTime, accountId: string | number, vintage: string | number, unitsAcquiredOrRedeemed: number, unitPrice: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, {
-            method: "POST",
-            payload: { date: toISO(date), accountId, vintage, unitsAcquiredOrRedeemed, unitPrice },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    updateInvestorPortalOptions = async (maintenanceMode: string | number, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
+    updateInvestorPortalOptions = async (maintenanceMode: boolean, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
             payload: { maintenanceMode, soapboxTitle, soapboxBody },
@@ -479,13 +480,32 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    takeSnapshotOfAssets = async (): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, {
+    performUnitAcquisition = async (acquisitionDate: string | Date | DateTime, accountId: number, fundsInvested: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ACQUISITION, {
             method: "POST",
-            payload: {},
+            payload: { acquisitionDate: toISO(acquisitionDate), accountId, fundsInvested },
             signed: true
         })
         return { ok, status }
+    }
+
+    performUnitRedemption = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
+            method: "POST",
+            payload: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REDEMPTION_PREVIEW, {
+            method: "GET",
+            queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
+            auth: true
+        })
+        const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
+        return { ok, status, data }
     }
 
     createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {
@@ -511,6 +531,40 @@ export class BCA_API_Client {
             method: "POST",
             payload: { performanceFee, feeDate: toISO(feeDate), isFYEnd, unitsRedeemed },
             signed: true
+        })
+        return { ok, status }
+    }
+
+    takeSnapshotOfAssets = async (): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, {
+            method: "POST",
+            payload: {},
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    getAvailableStatements = async (accountId: number): Promise<DataResponse<{ [statementType: string]: number[] }>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.AVAILABLE_STATEMENTS(accountId), { method: "GET", auth: true })
+        return { ok, status, data: body.data }
+    }
+
+    requestStatement = async (statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<StatusResponse> => {
+        let endpoint
+        switch (statementType) {
+            case "Account Statement":
+                endpoint = ENDPOINTS.GENERATE_ACCOUNT_STATEMENT
+                break
+            case "Tax Statement":
+                endpoint = ENDPOINTS.GENERATE_TAX_STATEMENT
+                break
+            default:
+                throw new Error("Unknown statement type.")
+        }
+        const { ok, status } = await this.fetchBase(endpoint(accountId), {
+            method: "POST",
+            queryParams: { financialYear },
+            auth: true
         })
         return { ok, status }
     }
