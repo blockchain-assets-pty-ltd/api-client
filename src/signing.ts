@@ -1,7 +1,7 @@
 import Web3 from "web3"
 
-export const signMessageWithEthereumPrivateKey = async (message: string, privateKey: string) => {
+export const signMessageWithEthereumPrivateKey = (message: string, privateKey: string): string => {
     const web3 = new Web3()
-    const signature = web3.eth.accounts.sign(message, privateKey)
-    return signature
+    const signResult = web3.eth.accounts.sign(message, privateKey)
+    return signResult.signature
 }
