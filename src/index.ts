@@ -1,3 +1,2 @@
 export { BCA_API_Client } from "./client"
-import type * as DataTypes from "@blockchain-assets-pty-ltd/data-types"
-export type { DataTypes }
+export type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, Bot, Client, FeeCalculation, FeeCapitalisationsEntry, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, TaxFileNumber, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/data-types"
