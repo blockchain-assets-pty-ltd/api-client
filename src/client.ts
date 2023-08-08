@@ -113,13 +113,15 @@ export class BCA_API_Client {
     private authToken?: string
     private signingKey?: string
     private signingFunction?: Function
+    private extraFetchArgs?: Record<string, any>
     private autoRequestNewAuthToken: boolean
 
-    constructor(apiUrl: string, options: { authToken?: string, signingKey?: string, signingFunction?: Function }) {
+    constructor(apiUrl: string, options: { authToken?: string, signingKey?: string, signingFunction?: Function, extraFetchArgs?: Record<string, any> }) {
         this.apiUrl = apiUrl
         this.authToken = options?.authToken
         this.signingKey = options?.signingKey
         this.signingFunction = options?.signingFunction
+        this.extraFetchArgs = options?.extraFetchArgs
 
         this.autoRequestNewAuthToken = !!options?.signingKey
     }
@@ -172,7 +174,8 @@ export class BCA_API_Client {
         return await fetch(`${this.apiUrl}${endpoint}${queryParams ? `?${new URLSearchParams(queryParams).toString()}` : ""}`, {
             method,
             headers,
-            body: bodyString
+            body: bodyString,
+            ...this.extraFetchArgs
         })
             .then(async res => {
                 let bodyObject: Record<string, any> = {}
