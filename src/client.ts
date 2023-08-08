@@ -1,8 +1,48 @@
 import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
 import jwt from "jsonwebtoken"
+import type { Big } from "big.js"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
 import Deserialise from "./deserialisation"
+
+type FetchOptions = {
+    method: string
+    auth?: boolean
+    queryParams?: Record<string, any>
+    payload?: Record<string, any>
+    signed?: boolean
+}
+
+type APIResponse = {
+    ok: boolean
+    status: number
+    body: Record<string, any>
+}
+
+type StatusResponse = {
+    ok: boolean
+    status: number
+}
+
+type TokenResponse = {
+    ok: boolean
+    status: number
+    token?: string
+}
+
+type DataResponse<T> = {
+    ok: boolean
+    status: number
+    data: T
+}
+
+export type FundOverview = {
+    lastUpdatedAt: DateTime
+    unitPrice: Big
+    aum: Big
+    assets: Asset[]
+    historicalFundMetrics: FundMetricsEntry[]
+}
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",

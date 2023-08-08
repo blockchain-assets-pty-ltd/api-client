@@ -1,6 +1,7 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
 import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, Bot, Client, FeeCalculation, FeeCapitalisationsEntry, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/data-types"
+import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
 const dateTime = (date: string) => DateTime.fromISO(date)
