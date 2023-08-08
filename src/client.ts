@@ -2,6 +2,7 @@ import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSett
 import jwt from "jsonwebtoken"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
+import Deserialise from "./deserialisation"
 
 const ENDPOINTS = {
     VERIFY_SIGNATURE: "/v1/token/verify_signature",
@@ -46,45 +47,6 @@ const ENDPOINTS = {
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`
 }
 
-type FetchOptions = {
-    method: string
-    auth?: boolean
-    queryParams?: Record<string, any>
-    payload?: Record<string, any>
-    signed?: boolean
-}
-
-type APIResponse = {
-    ok: boolean
-    status: number
-    body: Record<string, any>
-}
-
-type StatusResponse = {
-    ok: boolean
-    status: number
-}
-
-type TokenResponse = {
-    ok: boolean
-    status: number
-    token?: string
-}
-
-type DataResponse<T> = {
-    ok: boolean
-    status: number
-    data: T
-}
-
-type FundOverview = {
-    lastUpdatedAt: DateTime
-    unitPrice: number
-    aum: number
-    assets: Asset[]
-    historicalFundMetrics: FundMetricsEntry[]
-}
-
 const toISO = (date: string | Date | DateTime): string => {
     if (date instanceof Date) {
         return date.toISOString()
@@ -102,10 +64,6 @@ const toISO = (date: string | Date | DateTime): string => {
         else
             throw new Error(`The provided value could not be parsed to a valid date: '${date}'`)
     }
-}
-
-const fromISO = (date: string | null | undefined) => {
-    if (date) return DateTime.fromISO(date)
 }
 
 export class BCA_API_Client {
@@ -213,156 +171,122 @@ export class BCA_API_Client {
 
     getAdministrators = async (): Promise<DataResponse<Administrator[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Administrator) }
     }
 
     getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(Number(adminId)), { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Administrator(body.data) }
     }
 
     getBots = async (): Promise<DataResponse<Bot[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.BOTS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Bot) }
     }
 
     getBotInfo = async (botId: string | number): Promise<DataResponse<Bot>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.BOT(Number(botId)), { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Bot(body.data) }
     }
 
     getAssets = async (): Promise<DataResponse<Asset[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Asset) }
     }
 
     getAssetSettings = async (): Promise<DataResponse<AssetSettings[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.AssetSettings) }
     }
 
     getAssetPrices = async (): Promise<DataResponse<AssetPrice[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
-        const data: AssetPrice[] = body.data?.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.AssetPrice) }
     }
 
     getAssetBalances = async (): Promise<DataResponse<AssetBalance[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
-        const data: AssetBalance[] = body.data?.map((item: any) => ({ ...item, lastUpdatedAt: fromISO(item.lastUpdatedAt) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.AssetBalance) }
     }
 
     getAssetSources = async (): Promise<DataResponse<AssetSource[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.AssetSource) }
     }
 
     getAssetSnapshots = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AssetSnapshotsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: AssetSnapshotsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.AssetSnapshotsEntry) }
     }
 
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
-        const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.UnitHoldersRegisterEntry) }
     }
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
-        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Account) }
     }
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
-        const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Client) }
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
-        const data: Client[] = body.data?.map((item: any) => ({ ...item, lastAccessedAt: fromISO(item.lastAccessedAt) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Client) }
     }
 
     getClientInfo = async (clientId: number): Promise<DataResponse<Client>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CLIENT(clientId), { method: "GET", auth: true })
-        const data: Client = { ...body.data, lastAccessedAt: fromISO(body.data.lastAccessedAt) }
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Client(body.data) }
     }
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
-        const data = body.data?.map((item: any) => ({ ...item, initialInvestmentDate: fromISO(item.initialInvestmentDate) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.Account) }
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FundMetricsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.FundMetricsEntry) }
     }
 
     getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FundMetricsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.FundMetricsEntry) }
     }
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: InvestorPortalAccessLogEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.InvestorPortalAccessLogEntry) }
     }
 
     getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
-        return { ok, status, data: body.data }
+        return { ok, status, data: Deserialise.InvestorPortalOptions(body.data) }
     }
 
     getInvestorPortalFundOverview = async (): Promise<DataResponse<FundOverview>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_FUND_OVERVIEW, { method: "GET", auth: true })
-        const data: FundOverview = {
-            ...body.data,
-            lastUpdatedAt: fromISO(body.data.lastUpdatedAt),
-            historicalFundMetrics: body.data.historicalFundMetrics.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        }
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.FundOverview(body.data) }
     }
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: ModificationLogEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.ModificationLogEntry) }
     }
 
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
-        const data: FeeCalculation = {
-            ...body.data,
-            valuationDate: fromISO(body.data.valuationDate),
-            vintages: body.data.vintages.map((v: any) => ({
-                ...v,
-                creationDate: fromISO(v.creationDate),
-                latestFcEntry: {
-                    ...(v.latestFcEntry && { ...v.latestFcEntry, date: fromISO(v.latestFcEntry.date) })
-                },
-                uhrEntries: v.uhrEntries.map((uhr: any) => ({
-                    ...uhr,
-                    date: fromISO(uhr.date)
-                }))
-            }))
-        }
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.FeeCalculation(body.data) }
     }
 
     getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        const data: FeeCapitalisationsEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.FeeCapitalisationsEntry) }
     }
 
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: number | null, manualPrice: number | null): Promise<StatusResponse> => {
@@ -380,8 +304,7 @@ export class BCA_API_Client {
             payload: { email, firstName, lastName },
             signed: true
         })
-        const data: Client = { ...body.data, lastAccessedAt: fromISO(body.data.lastAccessedAt) }
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Client(body.data) }
     }
 
     updateClient = async (clientId: number, email: string, firstName: string, lastName: string): Promise<StatusResponse> => {
@@ -399,8 +322,7 @@ export class BCA_API_Client {
             payload: { accountName, entityType, address, suburb, state, postcode, country },
             signed: true
         })
-        const data = { ...body.data, initialInvestmentDate: fromISO(body.data.initialInvestmentDate) }
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Account(body.data) }
     }
 
     updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
@@ -507,8 +429,7 @@ export class BCA_API_Client {
             queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
             auth: true
         })
-        const data: UnitHoldersRegisterEntry[] = body.data?.map((item: any) => ({ ...item, date: fromISO(item.date) }))
-        return { ok, status, data }
+        return { ok, status, data: Deserialise.Array(body.data, Deserialise.UnitHoldersRegisterEntry) }
     }
 
     createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {

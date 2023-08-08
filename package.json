@@ -22,6 +22,7 @@
   "homepage": "https://github.com/blockchain-assets-pty-ltd/api-client#readme",
   "description": "",
   "dependencies": {
+    "big.js": "^6.2.1",
     "jsonwebtoken": "^9.0.1",
     "luxon": "^3.0.3",
     "web3": "^4.0.3"
