@@ -19,18 +19,18 @@ type APIResponse = {
     body: Record<string, any>
 }
 
-type StatusResponse = {
+export type StatusResponse = {
     ok: boolean
     status: number
 }
 
-type TokenResponse = {
+export type TokenResponse = {
     ok: boolean
     status: number
     token?: string
 }
 
-type DataResponse<T> = {
+export type DataResponse<T> = {
     ok: boolean
     status: number
     data: T
