@@ -165,7 +165,7 @@ export default class Deserialise {
             initialUnitsAcquired: Big(initialUnitsAcquired),
             unitsRemainingAtValuationDate: Big(unitsRemainingAtValuationDate),
             unitsRedeemedOnValuationDate: Big(unitsRedeemedOnValuationDate),
-            latestFcEntry: this.FeeCapitalisationsEntry(latestFcEntry),
+            latestFcEntry: !latestFcEntry ? latestFcEntry : this.FeeCapitalisationsEntry(latestFcEntry),
             previousMoneyRedeemedOnValuationDate: Big(previousMoneyRedeemedOnValuationDate),
             previousNetValueBeforePF: Big(previousNetValueBeforePF),
             previousNetValueAfterPF: Big(previousNetValueAfterPF),
