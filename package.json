@@ -28,7 +28,7 @@
     "web3": "^4.0.3"
   },
   "devDependencies": {
-    "@blockchain-assets-pty-ltd/data-types": "github:blockchain-assets-pty-ltd/data-types",
+    "@blockchain-assets-pty-ltd/shared": "github:blockchain-assets-pty-ltd/shared",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/luxon": "^3.0.1",
     "typescript": "^4.8.2"

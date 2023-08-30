@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry } from "@blockchain-assets-pty-ltd/data-types"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, TaxCalculation, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -67,6 +67,7 @@ const ENDPOINTS = {
     REDEMPTION: "/v1/unit_holders_register/redemption",
     REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     CALCULATE_FEES: "/v1/fees/calculate",
+    CALCULATE_TAX: "/v1/tax/calculate",
     CAPITALISATIONS: "/v1/fees/capitalisations",
     MANAGEMENT_FEE_INVOICE: "/fees/invoice/management_fee",
     PERFORMANCE_FEE_INVOICE: "/fees/invoice/performance_fee",
@@ -322,6 +323,29 @@ export class BCA_API_Client {
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
         const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         return { ok, status, data: Deserialise.FeeCalculation(body.data) }
+    }
+
+    getTaxCalculation = async (
+        financialYear: number,
+        totalTaxDistribution: TaxDistribution,
+        totalCashDistribution: Big,
+        taxDistributionPool: TaxDistribution,
+        streamedTaxDistributions: { [memberId: string]: TaxDistribution },
+        cashDistributionPool: Big
+    ): Promise<DataResponse<TaxCalculation>> => {
+        const { ok, status, body } = await this.fetchBase(ENDPOINTS.CALCULATE_TAX, {
+            method: "POST",
+            payload: {
+                financialYear,
+                totalTaxDistribution,
+                totalCashDistribution,
+                taxDistributionPool,
+                streamedTaxDistributions,
+                cashDistributionPool
+            },
+            auth: true
+        })
+        return { ok, status, data: Deserialise.TaxCalculation(body.data) }
     }
 
     getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
