@@ -164,7 +164,7 @@ export class BCA_API_Client {
 
     private fetchBase = async (endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> => {
         const { method, auth, queryParams, payload, signed } = fetchOptions
-        const bodyString = signed ? JSON.stringify({ endpoint: `${method} ${endpoint}`, payload, date: DateTime.now().toUTC().toISO() }) : null
+        const bodyString = JSON.stringify(signed ? { endpoint: `${method} ${endpoint}`, payload, date: DateTime.now().toUTC().toISO() } : payload )
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
             ...(bodyString && { "Content-Type": "application/json" }),
