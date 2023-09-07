@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, TaxCalculation, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -338,27 +338,23 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.FeeCalculation(data))
     }
 
-    getTaxCalculation = async (
+    getAttributionCalculation = async (
         financialYear: number,
-        totalTaxDistribution: TaxDistribution,
-        totalCashDistribution: Big,
-        taxDistributionPool: TaxDistribution,
-        streamedTaxDistributions: { [memberId: string]: TaxDistribution },
-        cashDistributionPool: Big
-    ): Promise<DataResponse<TaxCalculation>> => {
+        totalDistribution: Distribution,
+        distributionPool: Distribution,
+        streamedTaxDistributions: { [memberId: string]: Distribution },
+    ): Promise<DataResponse<AttributionCalculation>> => {
         const response = await this.fetchBase(ENDPOINTS.CALCULATE_TAX, {
             method: "POST",
             payload: {
                 financialYear,
-                totalTaxDistribution,
-                totalCashDistribution,
-                taxDistributionPool,
-                streamedTaxDistributions,
-                cashDistributionPool
+                totalDistribution,
+                distributionPool,
+                streamedTaxDistributions
             },
             auth: true
         })
-        return this.createDataResponse(response, (data) => Deserialise.TaxCalculation(data))
+        return this.createDataResponse(response, (data) => Deserialise.AttributionCalculation(data))
     }
 
     getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
