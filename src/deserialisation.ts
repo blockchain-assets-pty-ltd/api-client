@@ -59,9 +59,9 @@ export default class Deserialise {
     }
 
     static Account: Deserialiser<Account> = (val) => {
-        const { id, name, entityType, address, suburb, state, postcode, country, oldId, unitsHeld, totalInvested, initialInvestmentDate, tfnProvided } = val
+        const { id, name, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage, oldId, unitsHeld, totalInvested, initialInvestmentDate, tfnProvided } = val
         return {
-            id, name, entityType, address, suburb, state, postcode, country, oldId,
+            id, name, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage, oldId,
             unitsHeld: unitsHeld === undefined ? undefined : bigOrNull(unitsHeld),
             totalInvested: totalInvested === undefined ? undefined : bigOrNull(totalInvested),
             initialInvestmentDate: !initialInvestmentDate ? initialInvestmentDate : dateTime(initialInvestmentDate),
@@ -229,6 +229,15 @@ export default class Deserialise {
         }
     }
 
+    static AttributedDistributionsEntry: Deserialiser<AttributedDistributionsEntry> = (val) => {
+        const { date, accountId, distribution } = val
+        return {
+            date: dateTime(date),
+            accountId: Number(accountId),
+            distribution: this.Distribution(distribution)
+        }
+    }
+
     static AttributionCalculation: Deserialiser<AttributionCalculation> = (val) => {
         const { date, totalDistribution, attributions } = val
         return {
@@ -239,6 +248,19 @@ export default class Deserialise {
                 accountId: Number(a.accountId),
                 distribution: this.Distribution(a.distribution)
             })))
+        }
+    }
+
+    static DistributionAttributionPreview: Deserialiser<{
+        attributionCalculation: AttributionCalculation,
+        distributionReinvestmentEntries: UnitHoldersRegisterEntry[],
+        payouts: { accountId: number, amount: Big }[]
+    }> = (val) => {
+        const { attributionCalculation, distributionReinvestmentEntries, payouts } = val
+        return {
+            attributionCalculation: this.AttributionCalculation(attributionCalculation),
+            distributionReinvestmentEntries: this.Array(distributionReinvestmentEntries, this.UnitHoldersRegisterEntry),
+            payouts: payouts.map((p: any) => ({ accountId: Number(p.accountId), amount: Big(p.amount) }))
         }
     }
 }

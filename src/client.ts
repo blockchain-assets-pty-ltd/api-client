@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution, AttributedDistributionsEntry } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -73,7 +73,9 @@ const ENDPOINTS = {
     REDEMPTION: "/v1/unit_holders_register/redemption",
     REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     CALCULATE_FEES: "/v1/fees/calculate",
-    CALCULATE_TAX: "/v1/tax/calculate",
+    DISTRIBUTIONS: "/v1/tax/distributions",
+    ATTRIBUTE_DISTRIBUTIONS: "/v1/tax/distributions/attribute",
+    ATTRIBUTE_DISTRIBUTIONS_PREVIEW: "/v1/tax/distributions/attribute/preview",
     CAPITALISATIONS: "/v1/fees/capitalisations",
     MANAGEMENT_FEE_INVOICE: "/fees/invoice/management_fee",
     PERFORMANCE_FEE_INVOICE: "/fees/invoice/performance_fee",
@@ -338,28 +340,14 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.FeeCalculation(data))
     }
 
-    getAttributionCalculation = async (
-        financialYear: number,
-        totalDistribution: Distribution,
-        distributionPool: Distribution,
-        streamedTaxDistributions: { [memberId: string]: Distribution },
-    ): Promise<DataResponse<AttributionCalculation>> => {
-        const response = await this.fetchBase(ENDPOINTS.CALCULATE_TAX, {
-            method: "POST",
-            payload: {
-                financialYear,
-                totalDistribution,
-                distributionPool,
-                streamedTaxDistributions
-            },
-            auth: true
-        })
-        return this.createDataResponse(response, (data) => Deserialise.AttributionCalculation(data))
-    }
-
     getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
         const response = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FeeCapitalisationsEntry))
+    }
+
+    getAttributedDistributionsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AttributedDistributionsEntry[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.DISTRIBUTIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AttributedDistributionsEntry))
     }
 
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: number | null, manualPrice: number | null): Promise<StatusResponse> => {
@@ -389,19 +377,19 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<DataResponse<Account>> => {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: number): Promise<DataResponse<Account>> => {
         const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
-            payload: { accountName, entityType, address, suburb, state, postcode, country },
+            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
             signed: true
         })
         return this.createDataResponse(response, (data) => Deserialise.Account(data))
     }
 
-    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string): Promise<StatusResponse> => {
+    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: number): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(Number(accountId)), {
             method: "PUT",
-            payload: { accountName, entityType, address, suburb, state, postcode, country },
+            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
             signed: true
         })
         return { ok, status }
@@ -564,5 +552,47 @@ export class BCA_API_Client {
             auth: true
         })
         return { ok, status }
+    }
+
+    performDistributionAttribution = async (
+        financialYear: number,
+        totalDistribution: Distribution,
+        distributionPool: Distribution,
+        streamedTaxDistributions: { [memberId: string]: Omit<Distribution, "cash"> },
+    ): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS, {
+            method: "POST",
+            payload: {
+                financialYear,
+                totalDistribution,
+                distributionPool,
+                streamedTaxDistributions
+            },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    getDistributionAttributionPreview = async (
+        financialYear: number,
+        totalDistribution: Distribution,
+        distributionPool: Distribution,
+        streamedTaxDistributions: { [memberId: string]: Omit<Distribution, "cash"> },
+    ): Promise<DataResponse<{
+        attributionCalculation: AttributionCalculation,
+        distributionReinvestmentEntries: UnitHoldersRegisterEntry[],
+        payouts: { accountId: number, amount: Big }[]
+    }>> => {
+        const response = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS_PREVIEW, {
+            method: "POST",
+            payload: {
+                financialYear,
+                totalDistribution,
+                distributionPool,
+                streamedTaxDistributions
+            },
+            auth: true
+        })
+        return this.createDataResponse(response, (data) => Deserialise.DistributionAttributionPreview(data))
     }
 }
