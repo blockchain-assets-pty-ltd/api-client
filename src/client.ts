@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution, AttributedDistributionsEntry } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution, AttributedDistributionsEntry, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -556,17 +556,17 @@ export class BCA_API_Client {
 
     performDistributionAttribution = async (
         financialYear: number,
-        totalDistribution: Distribution,
-        distributionPool: Distribution,
-        streamedTaxDistributions: { [memberId: string]: Omit<Distribution, "cash"> },
+        taxPool: TaxDistribution,
+        cashPool: Big,
+        streamedTax: ({ accountId: number } & TaxDistribution)[],
     ): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS, {
             method: "POST",
             payload: {
                 financialYear,
-                totalDistribution,
-                distributionPool,
-                streamedTaxDistributions
+                taxPool,
+                cashPool,
+                streamedTax
             },
             signed: true
         })
@@ -575,24 +575,20 @@ export class BCA_API_Client {
 
     getDistributionAttributionPreview = async (
         financialYear: number,
-        totalDistribution: Distribution,
-        distributionPool: Distribution,
-        streamedTaxDistributions: { [memberId: string]: Omit<Distribution, "cash"> },
-    ): Promise<DataResponse<{
-        attributionCalculation: AttributionCalculation,
-        distributionReinvestmentEntries: UnitHoldersRegisterEntry[],
-        payouts: { accountId: number, amount: Big }[]
-    }>> => {
+        taxPool: TaxDistribution,
+        cashPool: Big,
+        streamedTax: ({ accountId: number } & TaxDistribution)[],
+    ): Promise<DataResponse<AttributionCalculation>> => {
         const response = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS_PREVIEW, {
-            method: "POST",
-            payload: {
+            method: "GET",
+            queryParams: {
                 financialYear,
-                totalDistribution,
-                distributionPool,
-                streamedTaxDistributions
+                taxPool,
+                cashPool,
+                streamedTax
             },
             auth: true
         })
-        return this.createDataResponse(response, (data) => Deserialise.DistributionAttributionPreview(data))
+        return this.createDataResponse(response, (data) => Deserialise.AttributionCalculation(data))
     }
 }

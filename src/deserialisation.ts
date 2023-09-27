@@ -1,6 +1,6 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, Client, Distribution, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, TaxDistribution, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
 import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
@@ -220,48 +220,42 @@ export default class Deserialise {
         }
     }
 
-    static Distribution: Deserialiser<Distribution> = (val) => {
-        const { discountCapitalGains, nonDiscountCapitalGains, income, cash } = val
+    static TaxDistribution: Deserialiser<TaxDistribution> = (val) => {
+        const { discountCapitalGains, nonDiscountCapitalGains, income } = val
         return {
             discountCapitalGains: Big(discountCapitalGains),
             nonDiscountCapitalGains: Big(nonDiscountCapitalGains),
-            income: Big(income),
-            cash: Big(cash)
+            income: Big(income)
+        }
+    }
+
+    static CashDistribution: Deserialiser<CashDistribution> = (val) => {
+        const { cashRedeemed, cashReinvested, cashPaidOut } = val
+        return {
+            cashRedeemed: Big(cashRedeemed),
+            cashReinvested: Big(cashReinvested),
+            cashPaidOut: Big(cashPaidOut)
         }
     }
 
     static AttributedDistributionsEntry: Deserialiser<AttributedDistributionsEntry> = (val) => {
-        const { date, accountId, distribution } = val
+        const { date, accountId, discountCapitalGains, nonDiscountCapitalGains, income, cashRedeemed, cashReinvested, cashPaidOut } = val
         return {
             date: dateTime(date),
             accountId: Number(accountId),
-            distribution: this.Distribution(distribution)
+            ...this.TaxDistribution({ discountCapitalGains, nonDiscountCapitalGains, income }),
+            ...this.CashDistribution({ cashRedeemed, cashReinvested, cashPaidOut })
         }
     }
 
     static AttributionCalculation: Deserialiser<AttributionCalculation> = (val) => {
-        const { date, totalDistribution, attributions } = val
+        const { date, taxPool, cashPool, streamedTax, attributions } = val
         return {
             date: dateTime(date),
-            totalDistribution: this.Distribution(totalDistribution),
-            attributions: attributions.map(((a: any) => ({
-                date: dateTime(a.date),
-                accountId: Number(a.accountId),
-                distribution: this.Distribution(a.distribution)
-            })))
-        }
-    }
-
-    static DistributionAttributionPreview: Deserialiser<{
-        attributionCalculation: AttributionCalculation,
-        distributionReinvestmentEntries: UnitHoldersRegisterEntry[],
-        payouts: { accountId: number, amount: Big }[]
-    }> = (val) => {
-        const { attributionCalculation, distributionReinvestmentEntries, payouts } = val
-        return {
-            attributionCalculation: this.AttributionCalculation(attributionCalculation),
-            distributionReinvestmentEntries: this.Array(distributionReinvestmentEntries, this.UnitHoldersRegisterEntry),
-            payouts: payouts.map((p: any) => ({ accountId: Number(p.accountId), amount: Big(p.amount) }))
+            taxPool: this.TaxDistribution(taxPool),
+            cashPool: Big(cashPool),
+            streamedTax: streamedTax.map((s: any) => ({ accountId: s.accountId, ...this.TaxDistribution(s)})),
+            attributions: this.Array(attributions, this.AttributedDistributionsEntry)
         }
     }
 }
