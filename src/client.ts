@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, Distribution, AttributedDistributionsEntry, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -9,8 +9,14 @@ type FetchOptions = {
     method: string
     auth?: boolean
     queryParams?: Record<string, any>
+    signed: true
     payload?: Record<string, any>
-    signed?: boolean
+} | {
+    method: string
+    auth?: boolean
+    queryParams?: Record<string, any>
+    signed?: false
+    body?: Record<string, any>
 }
 
 type APIResponse = {
@@ -171,8 +177,8 @@ export class BCA_API_Client {
     }
 
     private fetchBase = async (endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> => {
-        const { method, auth, queryParams, payload, signed } = fetchOptions
-        const bodyString = JSON.stringify(signed ? { endpoint: `${method} ${endpoint}`, payload, date: DateTime.now().toUTC().toISO() } : payload)
+        const { method, auth, queryParams, signed } = fetchOptions
+        const bodyString = JSON.stringify(signed ? { endpoint: `${method} ${endpoint}`, payload: fetchOptions.payload, date: DateTime.now().toUTC().toISO() } : fetchOptions.body)
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
             ...(bodyString && { "Content-Type": "application/json" }),
@@ -230,8 +236,8 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Administrator))
     }
 
-    getAdministratorInfo = async (adminId: string | number): Promise<DataResponse<Administrator>> => {
-        const response = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(Number(adminId)), { method: "GET", auth: true })
+    getAdministratorInfo = async (adminId: number): Promise<DataResponse<Administrator>> => {
+        const response = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Administrator(data))
     }
 
@@ -240,8 +246,8 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Bot))
     }
 
-    getBotInfo = async (botId: string | number): Promise<DataResponse<Bot>> => {
-        const response = await this.fetchBase(ENDPOINTS.BOT(Number(botId)), { method: "GET", auth: true })
+    getBotInfo = async (botId: number): Promise<DataResponse<Bot>> => {
+        const response = await this.fetchBase(ENDPOINTS.BOT(botId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Bot(data))
     }
 
@@ -286,7 +292,7 @@ export class BCA_API_Client {
     }
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), { method: "GET", auth: true })
+        const response = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
     }
 
@@ -301,7 +307,7 @@ export class BCA_API_Client {
     }
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(Number(clientId)), { method: "GET", auth: true })
+        const response = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
     }
 
@@ -335,7 +341,7 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.ModificationLogEntry))
     }
 
-    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: number): Promise<DataResponse<FeeCalculation>> => {
+    getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: Big): Promise<DataResponse<FeeCalculation>> => {
         const response = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.FeeCalculation(data))
     }
@@ -350,7 +356,7 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AttributedDistributionsEntry))
     }
 
-    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: number | null, manualPrice: number | null): Promise<StatusResponse> => {
+    updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: Big | null, manualPrice: Big | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { assetName, assetSymbol, manualBalance, manualPrice },
@@ -377,7 +383,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: number): Promise<DataResponse<Account>> => {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big): Promise<DataResponse<Account>> => {
         const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
@@ -386,8 +392,8 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Account(data))
     }
 
-    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(Number(accountId)), {
+    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
             payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
             signed: true
@@ -395,8 +401,8 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    updateClientsForAccount = async (accountId: number, clientIds: string[] | number[]): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(Number(accountId)), {
+    updateClientsForAccount = async (accountId: number, clientIds: number[]): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
             method: "PUT",
             payload: { clientIds },
             signed: true
@@ -413,7 +419,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAssetPrice = async (assetName: string, price: number): Promise<StatusResponse> => {
+    createAssetPrice = async (assetName: string, price: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.PRICE_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { price },
@@ -430,7 +436,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAssetBalance = async (assetName: string, sourceId: number, balance: number): Promise<StatusResponse> => {
+    createAssetBalance = async (assetName: string, sourceId: number, balance: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.BALANCE_FOR_ASSET(assetName), {
             method: "PUT",
             payload: { sourceId, balance },
@@ -448,7 +454,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createHistoricalFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+    createHistoricalFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: Big, aum: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
             method: "PUT",
             payload: { date: toISO(date), unitPrice, aum },
@@ -457,7 +463,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createRecentFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: number, aum: number): Promise<StatusResponse> => {
+    createRecentFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: Big, aum: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
             method: "PUT",
             payload: { date: toISO(date), unitPrice, aum },
@@ -466,7 +472,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    performUnitAcquisition = async (acquisitionDate: string | Date | DateTime, accountId: number, fundsInvested: number): Promise<StatusResponse> => {
+    performUnitAcquisition = async (acquisitionDate: string | Date | DateTime, accountId: number, fundsInvested: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACQUISITION, {
             method: "POST",
             payload: { acquisitionDate: toISO(acquisitionDate), accountId, fundsInvested },
@@ -475,7 +481,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    performUnitRedemption = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<StatusResponse> => {
+    performUnitRedemption = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.REDEMPTION, {
             method: "POST",
             payload: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
@@ -484,7 +490,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: number): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
+    getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: Big): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
         const response = await this.fetchBase(ENDPOINTS.REDEMPTION_PREVIEW, {
             method: "GET",
             queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
@@ -502,7 +508,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    raiseManagementFeeInvoice = async (managementFee: number, feeDate: string | Date | DateTime, isQuarterEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
+    raiseManagementFeeInvoice = async (managementFee: Big, feeDate: string | Date | DateTime, isQuarterEnd: boolean, unitsRedeemed: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.MANAGEMENT_FEE_INVOICE, {
             method: "POST",
             payload: { managementFee, feeDate: toISO(feeDate), isQuarterEnd, unitsRedeemed },
@@ -511,7 +517,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    raisePerformanceFeeInvoice = async (performanceFee: number, feeDate: string | Date | DateTime, isFYEnd: boolean, unitsRedeemed: number): Promise<StatusResponse> => {
+    raisePerformanceFeeInvoice = async (performanceFee: Big, feeDate: string | Date | DateTime, isFYEnd: boolean, unitsRedeemed: Big): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.PERFORMANCE_FEE_INVOICE, {
             method: "POST",
             payload: { performanceFee, feeDate: toISO(feeDate), isFYEnd, unitsRedeemed },
@@ -580,8 +586,8 @@ export class BCA_API_Client {
         streamedTax: ({ accountId: number } & TaxDistribution)[],
     ): Promise<DataResponse<AttributionCalculation>> => {
         const response = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS_PREVIEW, {
-            method: "GET",
-            queryParams: {
+            method: "POST",
+            body: {
                 financialYear,
                 taxPool,
                 cashPool,
