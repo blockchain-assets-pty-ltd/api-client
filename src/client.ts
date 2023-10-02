@@ -454,19 +454,17 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createHistoricalFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: Big, aum: Big): Promise<StatusResponse> => {
+    recordHistoricalFundMetricsEntry = async (): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, {
-            method: "PUT",
-            payload: { date: toISO(date), unitPrice, aum },
+            method: "POST",
             signed: true
         })
         return { ok, status }
     }
 
-    createRecentFundMetricsEntry = async (date: string | Date | DateTime, unitPrice: Big, aum: Big): Promise<StatusResponse> => {
+    recordRecentFundMetricsEntry = async (): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, {
-            method: "PUT",
-            payload: { date: toISO(date), unitPrice, aum },
+            method: "POST",
             signed: true
         })
         return { ok, status }
