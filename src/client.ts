@@ -83,8 +83,6 @@ const ENDPOINTS = {
     ATTRIBUTE_DISTRIBUTIONS: "/v1/tax/distributions/attribute",
     ATTRIBUTE_DISTRIBUTIONS_PREVIEW: "/v1/tax/distributions/attribute/preview",
     CAPITALISATIONS: "/v1/fees/capitalisations",
-    MANAGEMENT_FEE_INVOICE: "/v1/fees/invoice/management_fee",
-    PERFORMANCE_FEE_INVOICE: "/v1/fees/invoice/performance_fee",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
     CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
@@ -497,37 +495,19 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.UnitHoldersRegisterEntry))
     }
 
-    createFeeCapitalisationsEntries = async (feeCapitalisationsEntries: FeeCapitalisationsEntry[]): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, {
-            method: "PUT",
-            payload: { feeCapitalisationsEntries: feeCapitalisationsEntries.map((item) => ({ ...item, date: toISO(item.date) })) },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    raiseManagementFeeInvoice = async (managementFee: Big, feeDate: string | Date | DateTime, isQuarterEnd: boolean, unitsRedeemed: Big): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.MANAGEMENT_FEE_INVOICE, {
-            method: "POST",
-            payload: { managementFee, feeDate: toISO(feeDate), isQuarterEnd, unitsRedeemed },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    raisePerformanceFeeInvoice = async (performanceFee: Big, feeDate: string | Date | DateTime, isFYEnd: boolean, unitsRedeemed: Big): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.PERFORMANCE_FEE_INVOICE, {
-            method: "POST",
-            payload: { performanceFee, feeDate: toISO(feeDate), isFYEnd, unitsRedeemed },
-            signed: true
-        })
-        return { ok, status }
-    }
-
     takeSnapshotOfAssets = async (): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, {
             method: "POST",
             payload: {},
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    capitaliseFees = async (capitalisationDate: DateTime): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, {
+            method: "POST",
+            payload: { capitalisationDate },
             signed: true
         })
         return { ok, status }
