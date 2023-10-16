@@ -100,6 +100,7 @@ const ENDPOINTS = {
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
     JOBS: "/v1/jobs",
     JOB: (jobId: string) => `/v1/jobs/${jobId}`,
+    JOB_TYPES: "/v1/jobs/types",
     LIABILITIES: "/v1/liabilities",
     LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}`,
     CLEAR_LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}/clear`
@@ -367,6 +368,11 @@ export class BCA_API_Client {
     getJobInfo = async (jobId: string): Promise<DataResponse<Job>> => {
         const response = await this.fetchBase(ENDPOINTS.JOB(jobId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Job(data))
+    }
+
+    getJobTypes = async (): Promise<DataResponse<string[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.JOB_TYPES, { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => data)
     }
 
     getLiabilities = async (): Promise<DataResponse<Liability[]>> => {
