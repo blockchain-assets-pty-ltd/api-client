@@ -601,11 +601,11 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.AttributionCalculation(data))
     }
 
-    startJob = async (jobName: string, parameters: Record<string, any>): Promise<StatusResponse> => {
+    startJob = async (jobType: string, parameters: Record<string, any>): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.JOBS, {
             method: "POST",
             payload: {
-                jobName,
+                jobType,
                 parameters
             },
             signed: true
