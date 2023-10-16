@@ -622,7 +622,7 @@ export class BCA_API_Client {
     stopJob = async (jobId: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.JOB(jobId), {
             method: "POST",
-            auth: true
+            signed: true
         })
         return { ok, status }
     }
