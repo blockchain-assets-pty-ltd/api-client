@@ -1,6 +1,6 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, TaxDistribution, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxDistribution, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
 import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
@@ -254,8 +254,31 @@ export default class Deserialise {
             date: dateTime(date),
             taxPool: this.TaxDistribution(taxPool),
             cashPool: Big(cashPool),
-            streamedTax: streamedTax.map((s: any) => ({ accountId: s.accountId, ...this.TaxDistribution(s)})),
+            streamedTax: streamedTax.map((s: any) => ({ accountId: s.accountId, ...this.TaxDistribution(s) })),
             attributions: this.Array(attributions, this.AttributedDistributionsEntry)
+        }
+    }
+
+    static Job: Deserialiser<Job> = (val) => {
+        const { id, name, parameters, progress, error, running } = val
+        return {
+            id,
+            name,
+            parameters,
+            progress,
+            error,
+            running
+        }
+    }
+
+    static Liability: Deserialiser<Liability> = (val) => {
+        const { id, balance, description, openDate, closeDate } = val
+        return {
+            id,
+            balance: Big(balance),
+            description,
+            openDate: dateTime(openDate),
+            closeDate: !closeDate ? closeDate : dateTime(closeDate)
         }
     }
 }

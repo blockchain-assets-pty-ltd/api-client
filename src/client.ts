@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution, Job, Liability } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -97,7 +97,12 @@ const ENDPOINTS = {
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
     GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
-    GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`
+    GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
+    JOBS: "/v1/jobs",
+    JOB: (jobId: string) => `/v1/jobs/${jobId}`,
+    LIABILITIES: "/v1/liabilities",
+    LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}`,
+    CLEAR_LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}/clear`
 }
 
 const toISO = (date: string | Date | DateTime): string => {
@@ -354,6 +359,26 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AttributedDistributionsEntry))
     }
 
+    getJobs = async (): Promise<DataResponse<Job[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.JOBS, { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Job))
+    }
+
+    getJobInfo = async (jobId: string): Promise<DataResponse<Job>> => {
+        const response = await this.fetchBase(ENDPOINTS.JOB(jobId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Job(data))
+    }
+
+    getLiabilities = async (): Promise<DataResponse<Liability[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.LIABILITIES, { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Liability))
+    }
+
+    getLiabilityInfo = async (liabilityId: number): Promise<DataResponse<Liability>> => {
+        const response = await this.fetchBase(ENDPOINTS.LIABILITY(liabilityId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Liability(data))
+    }
+
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: Big | null, manualPrice: Big | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.SETTINGS_FOR_ASSET(assetName), {
             method: "PUT",
@@ -574,5 +599,33 @@ export class BCA_API_Client {
             auth: true
         })
         return this.createDataResponse(response, (data) => Deserialise.AttributionCalculation(data))
+    }
+
+    startJob = async (jobName: string, parameters: Record<string, any>): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.JOBS, {
+            method: "POST",
+            payload: {
+                jobName,
+                parameters
+            },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    deleteJob = async (jobId: string): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.JOB(jobId), {
+            method: "DELETE",
+            auth: true
+        })
+        return { ok, status }
+    }
+
+    clearLiability = async (liabilityId: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.CLEAR_LIABILITY(liabilityId), {
+            method: "POST",
+            signed: true
+        })
+        return { ok, status }
     }
 }
