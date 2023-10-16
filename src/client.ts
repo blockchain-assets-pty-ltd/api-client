@@ -370,7 +370,7 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Job(data))
     }
 
-    getJobTypes = async (): Promise<DataResponse<string[]>> => {
+    getJobTypes = async (): Promise<DataResponse<{ type: string, parameterNames: string[] }[]>> => {
         const response = await this.fetchBase(ENDPOINTS.JOB_TYPES, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => data)
     }
