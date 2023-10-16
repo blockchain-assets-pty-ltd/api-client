@@ -613,6 +613,14 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
+    stopJob = async (jobId: string): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.JOB(jobId), {
+            method: "POST",
+            auth: true
+        })
+        return { ok, status }
+    }
+
     deleteJob = async (jobId: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.JOB(jobId), {
             method: "DELETE",
