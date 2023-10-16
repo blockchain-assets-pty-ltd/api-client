@@ -100,7 +100,7 @@ const ENDPOINTS = {
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
     JOBS: "/v1/jobs",
     JOB: (jobId: string) => `/v1/jobs/${jobId}`,
-    JOB_TYPES: "/v1/jobs/types",
+    JOB_TYPES: "/v1/job_types",
     LIABILITIES: "/v1/liabilities",
     LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}`,
     CLEAR_LIABILITY: (liabilityId: number) => `/v1/liabilities/${liabilityId}/clear`
