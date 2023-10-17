@@ -260,14 +260,16 @@ export default class Deserialise {
     }
 
     static Job: Deserialiser<Job> = (val) => {
-        const { id, name, parameters, progress, error, running } = val
+        const { id, type, parameters, progress, error, running, startDate, finishDate } = val
         return {
             id,
-            name,
+            type,
             parameters,
             progress,
             error,
-            running
+            running, 
+            startDate: dateTime(startDate), 
+            finishDate: finishDate === null ? null : dateTime(finishDate)
         }
     }
 
