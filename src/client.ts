@@ -61,6 +61,7 @@ const ENDPOINTS = {
     EMAIL_CHALLENGE: "/v1/token/email_challenge",
     VERIFY_EMAIL: "/v1/token/verify_email",
     REFRESH: "/v1/token/refresh",
+    GENERATE_INVESTOR_PORTAL_LINK: "/v1/token/generate_investor_portal_link",
     ADMINISTRATORS: "/v1/administrators",
     ADMINISTRATOR: (adminId: number) => `/v1/administrators/${adminId}`,
     BOTS: "/v1/bots",
@@ -641,5 +642,17 @@ export class BCA_API_Client {
             signed: true
         })
         return { ok, status }
+    }
+
+    generateInvestorPortalLink = async (clientId: number, expiresIn: string): Promise<DataResponse<string>> => {
+        const response = await this.fetchBase(ENDPOINTS.GENERATE_INVESTOR_PORTAL_LINK, {
+            method: "POST",
+            payload: {
+                clientId,
+                expiresIn
+            },
+            signed: true
+        })
+        return this.createDataResponse(response, (data) => data)
     }
 }
