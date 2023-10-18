@@ -1,6 +1,6 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxDistribution, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxDistribution, TaxFileNumber, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
 import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
@@ -267,8 +267,8 @@ export default class Deserialise {
             parameters,
             progress,
             error,
-            running, 
-            startDate: dateTime(startDate), 
+            running,
+            startDate: dateTime(startDate),
             finishDate: finishDate === null ? null : dateTime(finishDate)
         }
     }
@@ -281,6 +281,15 @@ export default class Deserialise {
             description,
             openDate: dateTime(openDate),
             closeDate: !closeDate ? closeDate : dateTime(closeDate)
+        }
+    }
+
+    static TaxFileNumber: Deserialiser<TaxFileNumber> = (val) => {
+        const { taxFileNumber, accountId, clientId } = val
+        return {
+            taxFileNumber,
+            accountId,
+            clientId
         }
     }
 }

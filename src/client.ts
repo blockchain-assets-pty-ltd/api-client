@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution, Job, Liability } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution, Job, Liability, TaxFileNumber } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -80,16 +80,18 @@ const ENDPOINTS = {
     REDEMPTION: "/v1/unit_holders_register/redemption",
     REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     CALCULATE_FEES: "/v1/fees/calculate",
+    TAX_FILE_NUMBERS: "/v1/tax/tfns",
     DISTRIBUTIONS: "/v1/tax/distributions",
     ATTRIBUTE_DISTRIBUTIONS: "/v1/tax/distributions/attribute",
     ATTRIBUTE_DISTRIBUTIONS_PREVIEW: "/v1/tax/distributions/attribute/preview",
     CAPITALISATIONS: "/v1/fees/capitalisations",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
-    CLIENTS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
+    REGISTERED_CLIENTS: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
+    REGISTERED_TFNS: (accountId: number) => `/v1/accounts/${accountId}/registered_tfns`,
     CLIENTS: "/v1/clients",
     CLIENT: (clientId: number) => `/v1/clients/${clientId}`,
-    ACCOUNTS_FOR_CLIENT: (clientId: number) => `/v1/clients/${clientId}/registered_accounts`,
+    REGISTERED_ACCOUNTS: (clientId: number) => `/v1/clients/${clientId}/registered_accounts`,
     HISTORICAL_FUND_METRICS: "/v1/fund_metrics/historical",
     RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
@@ -297,7 +299,7 @@ export class BCA_API_Client {
     }
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        const response = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
     }
 
@@ -312,8 +314,18 @@ export class BCA_API_Client {
     }
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ACCOUNTS_FOR_CLIENT(clientId), { method: "GET", auth: true })
+        const response = await this.fetchBase(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
+    }
+
+    getTaxFileNumbers = async (): Promise<DataResponse<TaxFileNumber[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.TAX_FILE_NUMBERS, { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxFileNumber))
+    }
+
+    getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.REGISTERED_TFNS(accountId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxFileNumber))
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
@@ -427,9 +439,18 @@ export class BCA_API_Client {
     }
 
     updateClientsForAccount = async (accountId: number, clientIds: number[]): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.CLIENTS_FOR_ACCOUNT(accountId), {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
             method: "PUT",
             payload: { clientIds },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    updateTaxFileNumbersForAccount = async (accountId: number, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_TFNS(accountId), {
+            method: "PUT",
+            payload: { accountTFN, partnershipTFNs },
             signed: true
         })
         return { ok, status }
