@@ -376,14 +376,9 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => data)
     }
 
-    getLiabilities = async (): Promise<DataResponse<Liability[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.LIABILITIES, { method: "GET", auth: true })
+    getLiabilities = async (outstandingOnly: boolean): Promise<DataResponse<Liability[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.LIABILITIES, { method: "GET", queryParams: { outstandingOnly }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Liability))
-    }
-
-    getLiabilityInfo = async (liabilityId: number): Promise<DataResponse<Liability>> => {
-        const response = await this.fetchBase(ENDPOINTS.LIABILITY(liabilityId), { method: "GET", auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Liability(data))
     }
 
     updateAssetSettingsForAsset = async (assetName: string, assetSymbol: string | null, manualBalance: Big | null, manualPrice: Big | null): Promise<StatusResponse> => {
