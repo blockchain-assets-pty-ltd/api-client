@@ -80,7 +80,6 @@ const ENDPOINTS = {
     REDEMPTION: "/v1/unit_holders_register/redemption",
     REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     CALCULATE_FEES: "/v1/fees/calculate",
-    TAX_FILE_NUMBERS: "/v1/tax/tfns",
     DISTRIBUTIONS: "/v1/tax/distributions",
     ATTRIBUTE_DISTRIBUTIONS: "/v1/tax/distributions/attribute",
     ATTRIBUTE_DISTRIBUTIONS_PREVIEW: "/v1/tax/distributions/attribute/preview",
@@ -316,11 +315,6 @@ export class BCA_API_Client {
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
         const response = await this.fetchBase(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
-    }
-
-    getTaxFileNumbers = async (): Promise<DataResponse<TaxFileNumber[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.TAX_FILE_NUMBERS, { method: "GET", auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxFileNumber))
     }
 
     getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
