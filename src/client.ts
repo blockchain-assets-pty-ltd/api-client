@@ -414,19 +414,19 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big): Promise<DataResponse<Account>> => {
+    createAccount = async (accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<DataResponse<Account>> => {
         const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
-            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
+            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage, accountTFN, partnershipTFNs },
             signed: true
         })
         return this.createDataResponse(response, (data) => Deserialise.Account(data))
     }
 
-    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big): Promise<StatusResponse> => {
+    updateAccount = async (accountId: number, accountName: string, entityType: string, address: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
-            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage },
+            payload: { accountName, entityType, address, suburb, state, postcode, country, distributionReinvestmentPercentage, accountTFN, partnershipTFNs },
             signed: true
         })
         return { ok, status }
@@ -436,15 +436,6 @@ export class BCA_API_Client {
         const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
             method: "PUT",
             payload: { clientIds },
-            signed: true
-        })
-        return { ok, status }
-    }
-
-    updateTaxFileNumbersForAccount = async (accountId: number, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_TFNS(accountId), {
-            method: "PUT",
-            payload: { accountTFN, partnershipTFNs },
             signed: true
         })
         return { ok, status }
