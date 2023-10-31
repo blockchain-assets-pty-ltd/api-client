@@ -414,7 +414,7 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    createAccount = async (accountName: string, entityType: Account["entityType"], addressLine1: string, addressLine2: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<DataResponse<Account>> => {
+    createAccount = async (accountName: string, entityType: Account["entityType"], addressLine1: string, addressLine2: string | null, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<DataResponse<Account>> => {
         const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, addressLine1, addressLine2, suburb, state, postcode, country, distributionReinvestmentPercentage, accountTFN, partnershipTFNs },
@@ -423,7 +423,7 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Account(data))
     }
 
-    updateAccount = async (accountId: number, accountName: string, entityType: Account["entityType"], addressLine1: string, addressLine2: string, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<StatusResponse> => {
+    updateAccount = async (accountId: number, accountName: string, entityType: Account["entityType"], addressLine1: string, addressLine2: string | null, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ACCOUNT(accountId), {
             method: "PUT",
             payload: { accountName, entityType, addressLine1, addressLine2, suburb, state, postcode, country, distributionReinvestmentPercentage, accountTFN, partnershipTFNs },
