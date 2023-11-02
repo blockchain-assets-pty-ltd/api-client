@@ -100,6 +100,7 @@ const ENDPOINTS = {
     AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
     GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
+    GENERATE_AIIR: "/v1/documents/generate/aiir",
     JOBS: "/v1/jobs",
     JOB: (jobId: string) => `/v1/jobs/${jobId}`,
     JOB_TYPES: "/v1/job_types",
@@ -564,6 +565,15 @@ export class BCA_API_Client {
                 throw new Error("Unknown statement type.")
         }
         const { ok, status } = await this.fetchBase(endpoint(accountId), {
+            method: "POST",
+            queryParams: { financialYear },
+            auth: true
+        })
+        return { ok, status }
+    }
+
+    requestAIIR = async (financialYear: number): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
             queryParams: { financialYear },
             auth: true
