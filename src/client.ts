@@ -80,9 +80,9 @@ const ENDPOINTS = {
     REDEMPTION: "/v1/unit_holders_register/redemption",
     REDEMPTION_PREVIEW: "/v1/unit_holders_register/redemption/preview",
     CALCULATE_FEES: "/v1/fees/calculate",
-    DISTRIBUTIONS: "/v1/tax/distributions",
-    ATTRIBUTE_DISTRIBUTIONS: "/v1/tax/distributions/attribute",
-    ATTRIBUTE_DISTRIBUTIONS_PREVIEW: "/v1/tax/distributions/attribute/preview",
+    TAX_LEDGER: "/v1/tax/ledger",
+    CALCULATE_TAX: "/v1/tax/calculate",
+    SUBMIT_TAX: "/v1/tax/submit",
     CAPITALISATIONS: "/v1/fees/capitalisations",
     ACCOUNTS: "/v1/accounts",
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
@@ -363,8 +363,8 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FeeCapitalisationsEntry))
     }
 
-    getAttributedDistributionsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<TaxLedgerEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.DISTRIBUTIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+    getTaxLedgerEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<TaxLedgerEntry[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.TAX_LEDGER, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxLedgerEntry))
     }
 
@@ -581,13 +581,13 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    performDistributionAttribution = async (
+    performTaxAttribution = async (
         financialYear: number,
         taxPool: TaxAttribution,
         cashPool: Big,
         streamedTax: ({ accountId: number } & TaxAttribution)[],
     ): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS, {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.SUBMIT_TAX, {
             method: "POST",
             payload: {
                 financialYear,
@@ -600,13 +600,13 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    getDistributionAttributionPreview = async (
+    calculateTaxAttributions = async (
         financialYear: number,
         taxPool: TaxAttribution,
         cashPool: Big,
         streamedTax: ({ accountId: number } & TaxAttribution)[],
     ): Promise<DataResponse<AttributionCalculation>> => {
-        const response = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS_PREVIEW, {
+        const response = await this.fetchBase(ENDPOINTS.CALCULATE_TAX, {
             method: "POST",
             body: {
                 financialYear,
