@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, AttributedDistributionsEntry, TaxDistribution, Job, Liability, TaxFileNumber } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -363,9 +363,9 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FeeCapitalisationsEntry))
     }
 
-    getAttributedDistributionsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AttributedDistributionsEntry[]>> => {
+    getAttributedDistributionsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<TaxLedgerEntry[]>> => {
         const response = await this.fetchBase(ENDPOINTS.DISTRIBUTIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AttributedDistributionsEntry))
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxLedgerEntry))
     }
 
     getJobs = async (): Promise<DataResponse<Job[]>> => {
@@ -583,9 +583,9 @@ export class BCA_API_Client {
 
     performDistributionAttribution = async (
         financialYear: number,
-        taxPool: TaxDistribution,
+        taxPool: TaxAttribution,
         cashPool: Big,
-        streamedTax: ({ accountId: number } & TaxDistribution)[],
+        streamedTax: ({ accountId: number } & TaxAttribution)[],
     ): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS, {
             method: "POST",
@@ -602,9 +602,9 @@ export class BCA_API_Client {
 
     getDistributionAttributionPreview = async (
         financialYear: number,
-        taxPool: TaxDistribution,
+        taxPool: TaxAttribution,
         cashPool: Big,
-        streamedTax: ({ accountId: number } & TaxDistribution)[],
+        streamedTax: ({ accountId: number } & TaxAttribution)[],
     ): Promise<DataResponse<AttributionCalculation>> => {
         const response = await this.fetchBase(ENDPOINTS.ATTRIBUTE_DISTRIBUTIONS_PREVIEW, {
             method: "POST",

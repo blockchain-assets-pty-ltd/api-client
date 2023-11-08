@@ -1,6 +1,6 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, AttributedDistributionsEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxDistribution, TaxFileNumber, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, TaxLedgerEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxAttribution, TaxFileNumber, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
 import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
@@ -220,12 +220,12 @@ export default class Deserialise {
         }
     }
 
-    static TaxDistribution: Deserialiser<TaxDistribution> = (val) => {
-        const { discountCapitalGains, nonDiscountCapitalGains, income } = val
+    static TaxAttribution: Deserialiser<TaxAttribution> = (val) => {
+        const { discountedCapitalGains, otherCapitalGains, otherIncome } = val
         return {
-            discountCapitalGains: Big(discountCapitalGains),
-            nonDiscountCapitalGains: Big(nonDiscountCapitalGains),
-            income: Big(income)
+            discountedCapitalGains: Big(discountedCapitalGains),
+            otherCapitalGains: Big(otherCapitalGains),
+            otherIncome: Big(otherIncome)
         }
     }
 
@@ -238,12 +238,12 @@ export default class Deserialise {
         }
     }
 
-    static AttributedDistributionsEntry: Deserialiser<AttributedDistributionsEntry> = (val) => {
-        const { date, accountId, discountCapitalGains, nonDiscountCapitalGains, income, cashRedeemed, cashReinvested, cashPaidOut } = val
+    static TaxLedgerEntry: Deserialiser<TaxLedgerEntry> = (val) => {
+        const { date, accountId, discountedCapitalGains, otherCapitalGains, otherIncome, cashRedeemed, cashReinvested, cashPaidOut } = val
         return {
             date: dateTime(date),
             accountId: Number(accountId),
-            ...this.TaxDistribution({ discountCapitalGains, nonDiscountCapitalGains, income }),
+            ...this.TaxAttribution({ discountedCapitalGains, otherCapitalGains, otherIncome }),
             ...this.CashDistribution({ cashRedeemed, cashReinvested, cashPaidOut })
         }
     }
@@ -252,10 +252,10 @@ export default class Deserialise {
         const { date, taxPool, cashPool, streamedTax, attributions } = val
         return {
             date: dateTime(date),
-            taxPool: this.TaxDistribution(taxPool),
+            taxPool: this.TaxAttribution(taxPool),
             cashPool: Big(cashPool),
-            streamedTax: streamedTax.map((s: any) => ({ accountId: s.accountId, ...this.TaxDistribution(s) })),
-            attributions: this.Array(attributions, this.AttributedDistributionsEntry)
+            streamedTax: streamedTax.map((s: any) => ({ accountId: s.accountId, ...this.TaxAttribution(s) })),
+            attributions: this.Array(attributions, this.TaxLedgerEntry)
         }
     }
 
