@@ -85,8 +85,8 @@ export default class Deserialise {
     }
 
     static InvestorPortalAccessLogEntry: Deserialiser<InvestorPortalAccessLogEntry> = (val) => {
-        const { date, clientId } = val
-        return { date: dateTime(date), clientId }
+        const { sessionStartedAt, clientId, lastActivityAt, deviceType, os, browser } = val
+        return { sessionStartedAt: dateTime(sessionStartedAt), clientId, lastActivityAt: dateTime(lastActivityAt), deviceType, os, browser }
     }
 
     static InvestorPortalOptions: Deserialiser<InvestorPortalOptions> = (val) => {

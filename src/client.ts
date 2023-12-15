@@ -94,8 +94,10 @@ const ENDPOINTS = {
     HISTORICAL_FUND_METRICS: "/v1/fund_metrics/historical",
     RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
+    INVESTOR_PORTAL_ACTIVE_SESSIONS: "/v1/investor_portal/active_sessions",
     INVESTOR_PORTAL_OPTIONS: "/v1/investor_portal/options",
     INVESTOR_PORTAL_FUND_OVERVIEW: "/v1/investor_portal/fund_overview",
+    HEARTBEAT: "/v1/investor_portal/heartbeat",
     MODIFICATION_EVENT_LOG: "/v1/audit/modification_event_log",
     AVAILABLE_STATEMENTS: (accountId: number) => `/v1/documents/available_statements/${accountId}`,
     GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
@@ -335,6 +337,11 @@ export class BCA_API_Client {
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
         const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.InvestorPortalAccessLogEntry))
+    }
+
+    getInvestorPortalActiveSessions = async (): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
+        const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACTIVE_SESSIONS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.InvestorPortalAccessLogEntry))
     }
 
@@ -665,5 +672,13 @@ export class BCA_API_Client {
             signed: true
         })
         return this.createDataResponse(response, (data) => data)
+    }
+
+    sendHeartbeat = async (): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.HEARTBEAT, {
+            method: "GET",
+            auth: true
+        })
+        return { ok, status }
     }
 }
