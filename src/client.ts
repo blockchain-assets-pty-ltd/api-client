@@ -449,10 +449,10 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    updateInvestorPortalOptions = async (maintenanceMode: boolean, soapboxTitle: string, soapboxBody: string): Promise<StatusResponse> => {
+    updateInvestorPortalOptions = async (maintenanceMode: boolean, soapboxTitle: string, soapboxBody: string, soapboxHtml: string): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, {
             method: "PUT",
-            payload: { maintenanceMode, soapboxTitle, soapboxBody },
+            payload: { maintenanceMode, soapboxTitle, soapboxBody, soapboxHtml },
             signed: true
         })
         return { ok, status }
