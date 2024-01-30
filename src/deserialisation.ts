@@ -90,8 +90,8 @@ export default class Deserialise {
     }
 
     static InvestorPortalOptions: Deserialiser<InvestorPortalOptions> = (val) => {
-        const { maintenanceMode, soapboxTitle, soapboxBody } = val
-        return { maintenanceMode, soapboxTitle, soapboxBody }
+        const { maintenanceMode, soapboxTitle, soapboxBody, soapboxHtml } = val
+        return { maintenanceMode, soapboxTitle, soapboxBody, soapboxHtml }
     }
 
     static FundOverview: Deserialiser<FundOverview> = (val) => {
