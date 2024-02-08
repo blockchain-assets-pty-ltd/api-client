@@ -1,28 +1,29 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber, ApplicationForm } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
 import { signMessageWithEthereumPrivateKey } from "./signing"
 import Deserialise from "./deserialisation"
 
-type FetchOptions = {
+type FetchOptions<T extends Body> = {
     method: string
     auth?: boolean
     queryParams?: Record<string, any>
+    responseType?: T extends string ? "text" : T extends Record<string, any> ? "json" : T extends Blob ? "blob" : undefined
+} & ({
     signed: true
     payload?: Record<string, any>
 } | {
-    method: string
-    auth?: boolean
-    queryParams?: Record<string, any>
     signed?: false
     body?: Record<string, any>
-}
+})
 
-type APIResponse = {
+type Body = string | Record<string, any> | Blob | undefined
+
+type APIResponse<T extends Body> = {
     ok: boolean
     status: number
-    body: Record<string, any>
+    body: T
 }
 
 export type StatusResponse = {
@@ -43,6 +44,15 @@ export type DataResponse<T> = {
     ok: true
     status: number
     data: T
+} | {
+    ok: false
+    status: number
+}
+
+export type FileResponse = {
+    ok: true
+    status: number
+    file: File | null
 } | {
     ok: false
     status: number
@@ -103,6 +113,7 @@ const ENDPOINTS = {
     GENERATE_ACCOUNT_STATEMENT: (accountId: number) => `/v1/documents/generate/account_statement/${accountId}`,
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
     GENERATE_AIIR: "/v1/documents/generate/aiir",
+    GENERATE_APPLICATION_FORM: "/v1/documents/generate/application_form",
     JOBS: "/v1/jobs",
     JOB: (jobId: string) => `/v1/jobs/${jobId}`,
     JOB_TYPES: "/v1/job_types",
@@ -185,8 +196,8 @@ export class BCA_API_Client {
         }
     }
 
-    private fetchBase = async (endpoint: string, fetchOptions: FetchOptions): Promise<APIResponse> => {
-        const { method, auth, queryParams, signed } = fetchOptions
+    private fetchBase = async <T extends Body>(endpoint: string, fetchOptions: FetchOptions<T>): Promise<APIResponse<T>> => {
+        const { method, auth, responseType, queryParams, signed } = fetchOptions
         const bodyString = JSON.stringify(signed ? { endpoint: `${method} ${endpoint}`, payload: fetchOptions.payload, date: DateTime.now().toUTC().toISO() } : fetchOptions.body)
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
@@ -200,28 +211,31 @@ export class BCA_API_Client {
             ...this.extraFetchArgs
         })
             .then(async res => {
-                let bodyObject: Record<string, any> = {}
-                if (res.ok) {
-                    try { bodyObject = await res.json() }
-                    catch { }
-                }
+                const body: T = res.ok ? (responseType === "text" ? await res.text() : responseType === "blob" ? await res.blob() : await res.json()) : undefined
                 return {
                     ok: res.ok,
                     status: res.status,
-                    body: bodyObject
+                    body
                 }
             })
     }
 
-    private createDataResponse = <T>(apiResponse: APIResponse, deserialiser: (data: any) => T): DataResponse<T> => {
+    private createDataResponse = <ReturnType>(apiResponse: APIResponse<Record<string, any>>, deserialiser: (data: any) => ReturnType): DataResponse<ReturnType> => {
         if (apiResponse.ok)
             return { ok: apiResponse.ok, status: apiResponse.status, data: deserialiser(apiResponse.body.data) }
         else
             return { ok: apiResponse.ok, status: apiResponse.status }
     }
 
+    private createFileResponse = (apiResponse: APIResponse<Blob | undefined>, filename: string, filetype: string): FileResponse => {
+        if (apiResponse.ok)
+            return { ok: apiResponse.ok, status: apiResponse.status, file: apiResponse.body === undefined ? null : new File([apiResponse.body], filename, { type: filetype }) }
+        else
+            return { ok: apiResponse.ok, status: apiResponse.status }
+    }
+
     submitSignedAuthRequest = async (): Promise<TokenResponse> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.VERIFY_SIGNATURE, { method: "POST", signed: true })
+        const { ok, status, body } = await this.fetchBase<Record<string, any>>(ENDPOINTS.VERIFY_SIGNATURE, { method: "POST", signed: true })
         return { ok, status, token: !ok ? undefined : body.token }
     }
 
@@ -231,167 +245,167 @@ export class BCA_API_Client {
     }
 
     submitEmailChallenge = async (challenge: string): Promise<TokenResponse> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
+        const { ok, status, body } = await this.fetchBase<Record<string, any>>(ENDPOINTS.VERIFY_EMAIL, { method: "POST", queryParams: { challenge } })
         return { ok, status, token: !ok ? undefined : body.token }
     }
 
     getRefreshToken = async (): Promise<TokenResponse> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.REFRESH, { method: "POST", auth: true })
+        const { ok, status, body } = await this.fetchBase<Record<string, any>>(ENDPOINTS.REFRESH, { method: "POST", auth: true })
         return { ok, status, token: !ok ? undefined : body.token }
     }
 
     getAdministrators = async (): Promise<DataResponse<Administrator[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ADMINISTRATORS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Administrator))
     }
 
     getAdministratorInfo = async (adminId: number): Promise<DataResponse<Administrator>> => {
-        const response = await this.fetchBase(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ADMINISTRATOR(adminId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Administrator(data))
     }
 
     getBots = async (): Promise<DataResponse<Bot[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.BOTS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.BOTS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Bot))
     }
 
     getBotInfo = async (botId: number): Promise<DataResponse<Bot>> => {
-        const response = await this.fetchBase(ENDPOINTS.BOT(botId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.BOT(botId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Bot(data))
     }
 
     getAssets = async (): Promise<DataResponse<Asset[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ASSETS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ASSETS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Asset))
     }
 
     getAssetSettings = async (): Promise<DataResponse<AssetSettings[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ASSET_SETTINGS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AssetSettings))
     }
 
     getAssetPrices = async (): Promise<DataResponse<AssetPrice[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.PRICES, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.PRICES, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AssetPrice))
     }
 
     getAssetBalances = async (): Promise<DataResponse<AssetBalance[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.BALANCES, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.BALANCES, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AssetBalance))
     }
 
     getAssetSources = async (): Promise<DataResponse<AssetSource[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.SOURCES, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.SOURCES, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AssetSource))
     }
 
     getAssetSnapshots = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<AssetSnapshotsEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ASSET_SNAPSHOTS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ASSET_SNAPSHOTS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AssetSnapshotsEntry))
     }
 
     getUnitHoldersRegister = async (): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.UNIT_HOLDERS_REGISTER, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.UnitHoldersRegisterEntry))
     }
 
     getAccounts = async (): Promise<DataResponse<Account[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ACCOUNTS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
     }
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CLIENTS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
     }
 
     getClientInfo = async (clientId: number): Promise<DataResponse<Client>> => {
-        const response = await this.fetchBase(ENDPOINTS.CLIENT(clientId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CLIENT(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Client(data))
     }
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
     }
 
     getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.REGISTERED_TFNS(accountId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_TFNS(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxFileNumber))
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.HISTORICAL_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FundMetricsEntry))
     }
 
     getRecentFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.RECENT_FUND_METRICS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FundMetricsEntry))
     }
 
     getInvestorPortalAccessLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.INVESTOR_PORTAL_ACCESS_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.InvestorPortalAccessLogEntry))
     }
 
     getInvestorPortalActiveSessions = async (): Promise<DataResponse<InvestorPortalAccessLogEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_ACTIVE_SESSIONS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.INVESTOR_PORTAL_ACTIVE_SESSIONS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.InvestorPortalAccessLogEntry))
     }
 
     getInvestorPortalOptions = async (): Promise<DataResponse<InvestorPortalOptions>> => {
-        const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.INVESTOR_PORTAL_OPTIONS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.InvestorPortalOptions(data))
     }
 
     getInvestorPortalFundOverview = async (): Promise<DataResponse<FundOverview>> => {
-        const response = await this.fetchBase(ENDPOINTS.INVESTOR_PORTAL_FUND_OVERVIEW, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.INVESTOR_PORTAL_FUND_OVERVIEW, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.FundOverview(data))
     }
 
     getModificationEventLog = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<ModificationLogEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.MODIFICATION_EVENT_LOG, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.ModificationLogEntry))
     }
 
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: Big): Promise<DataResponse<FeeCalculation>> => {
-        const response = await this.fetchBase(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.FeeCalculation(data))
     }
 
     getFeeCapitalisationsEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FeeCapitalisationsEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CAPITALISATIONS, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.FeeCapitalisationsEntry))
     }
 
     getTaxLedgerEntries = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<TaxLedgerEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.TAX_LEDGER, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.TAX_LEDGER, { method: "GET", queryParams: { startDate: toISO(startDate), endDate: toISO(endDate) }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxLedgerEntry))
     }
 
     getJobs = async (): Promise<DataResponse<Job[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.JOBS, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.JOBS, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Job))
     }
 
     getJobInfo = async (jobId: string): Promise<DataResponse<Job>> => {
-        const response = await this.fetchBase(ENDPOINTS.JOB(jobId), { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.JOB(jobId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Job(data))
     }
 
     getJobTypes = async (): Promise<DataResponse<{ type: string, parameterNames: string[] }[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.JOB_TYPES, { method: "GET", auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.JOB_TYPES, { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => data)
     }
 
     getLiabilities = async (outstandingOnly: boolean): Promise<DataResponse<Liability[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.LIABILITIES, { method: "GET", queryParams: { outstandingOnly }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.LIABILITIES, { method: "GET", queryParams: { outstandingOnly }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Liability))
     }
 
@@ -405,7 +419,7 @@ export class BCA_API_Client {
     }
 
     createClient = async (email: string, firstName: string, lastName: string): Promise<DataResponse<Client>> => {
-        const response = await this.fetchBase(ENDPOINTS.CLIENTS, {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CLIENTS, {
             method: "POST",
             payload: { email, firstName, lastName },
             signed: true
@@ -423,7 +437,7 @@ export class BCA_API_Client {
     }
 
     createAccount = async (accountName: string, entityType: Account["entityType"], addressLine1: string, addressLine2: string | null, suburb: string, state: string, postcode: string, country: string, distributionReinvestmentPercentage: Big, accountTFN: string | null, partnershipTFNs: { taxFileNumber: string, clientId: number }[] | null): Promise<DataResponse<Account>> => {
-        const response = await this.fetchBase(ENDPOINTS.ACCOUNTS, {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ACCOUNTS, {
             method: "POST",
             payload: { accountName, entityType, addressLine1, addressLine2: addressLine2 === "" ? null : addressLine2, suburb, state, postcode, country, distributionReinvestmentPercentage, accountTFN, partnershipTFNs },
             signed: true
@@ -528,7 +542,7 @@ export class BCA_API_Client {
     }
 
     getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: Big): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
-        const response = await this.fetchBase(ENDPOINTS.REDEMPTION_PREVIEW, {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REDEMPTION_PREVIEW, {
             method: "GET",
             queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
             auth: true
@@ -555,11 +569,11 @@ export class BCA_API_Client {
     }
 
     getAvailableStatements = async (accountId: number): Promise<DataResponse<{ [statementType: string]: number[] }>> => {
-        const { ok, status, body } = await this.fetchBase(ENDPOINTS.AVAILABLE_STATEMENTS(accountId), { method: "GET", auth: true })
+        const { ok, status, body } = await this.fetchBase<Record<string, any>>(ENDPOINTS.AVAILABLE_STATEMENTS(accountId), { method: "GET", auth: true })
         return { ok, status, data: !ok ? undefined : body.data }
     }
 
-    requestStatement = async (statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<StatusResponse> => {
+    requestStatement = async (statementType: "Account Statement" | "Tax Statement", deliveryMethod: "email" | "download", financialYear: number, accountId: number): Promise<FileResponse> => {
         let endpoint
         switch (statementType) {
             case "Account Statement":
@@ -571,21 +585,30 @@ export class BCA_API_Client {
             default:
                 throw new Error("Unknown statement type.")
         }
-        const { ok, status } = await this.fetchBase(endpoint(accountId), {
+        const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
-            queryParams: { financialYear },
+            queryParams: { deliveryMethod, financialYear },
             auth: true
         })
-        return { ok, status }
+        return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (financialYear: number): Promise<StatusResponse> => {
-        const { ok, status } = await this.fetchBase(ENDPOINTS.GENERATE_AIIR, {
+    requestAIIR = async (deliveryMethod: "email" | "download", financialYear: number): Promise<FileResponse | StatusResponse> => {
+        const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
-            queryParams: { financialYear },
+            queryParams: { deliveryMethod, financialYear },
             auth: true
         })
-        return { ok, status }
+        return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
+    }
+
+    requestApplicationForm = async (deliveryMethod: "email" | "download", applicationForm: ApplicationForm): Promise<FileResponse> => {
+        const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
+            method: "POST",
+            queryParams: { deliveryMethod },
+            body: { applicationForm }
+        })
+        return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
     }
 
     performTaxAttribution = async (
@@ -613,7 +636,7 @@ export class BCA_API_Client {
         cashPool: Big,
         streamedTax: ({ accountId: number } & TaxAttribution)[],
     ): Promise<DataResponse<AttributionCalculation>> => {
-        const response = await this.fetchBase(ENDPOINTS.CALCULATE_TAX, {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CALCULATE_TAX, {
             method: "POST",
             body: {
                 financialYear,
@@ -663,7 +686,7 @@ export class BCA_API_Client {
     }
 
     generateInvestorPortalLink = async (clientId: number, expiresIn: string): Promise<DataResponse<string>> => {
-        const response = await this.fetchBase(ENDPOINTS.GENERATE_INVESTOR_PORTAL_LINK, {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.GENERATE_INVESTOR_PORTAL_LINK, {
             method: "POST",
             payload: {
                 clientId,
