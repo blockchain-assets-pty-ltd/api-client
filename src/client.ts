@@ -141,6 +141,13 @@ const toISO = (date: string | Date | DateTime): string => {
     }
 }
 
+const serializeFile = async (file: File | null | undefined) => {
+    return !file ? null : {
+        filename: file.name,
+        content: await file?.text()
+    }
+}
+
 export class BCA_API_Client {
     private apiUrl: string
     private authToken?: string
@@ -622,6 +629,23 @@ export class BCA_API_Client {
     }
 
     requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
+        if (applicationForm.formData) {
+            applicationForm.formData.idDocuments = serializeFile(applicationForm.formData?.idDocuments) as any
+            if (applicationForm.entityType == "Company") {
+                applicationForm.formData.company.companyExtract = await serializeFile(applicationForm.formData?.company.companyExtract) as any
+            }
+            if (applicationForm.entityType == "Trust") {
+                applicationForm.formData.trust.trustDeed = await serializeFile(applicationForm.formData?.trust.trustDeed) as any
+                if (applicationForm.formData.trust.corporateTrustee)
+                    applicationForm.formData.trust.corporateTrustee.companyExtract = await serializeFile(applicationForm.formData?.trust.corporateTrustee?.companyExtract) as any
+            }
+            if (applicationForm.entityType == "Superannuation Fund") {
+                applicationForm.formData.superannuationFund.trustDeed = await serializeFile(applicationForm.formData?.superannuationFund.trustDeed) as any
+                if (applicationForm.formData.superannuationFund.corporateTrustee)
+                    applicationForm.formData.superannuationFund.corporateTrustee.companyExtract = await serializeFile(applicationForm.formData?.superannuationFund.corporateTrustee?.companyExtract) as any
+            }
+        }
+
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
             responseType: "blob",
