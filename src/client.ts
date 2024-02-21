@@ -9,7 +9,7 @@ type FetchOptions<T extends Body> = {
     method: string
     auth?: boolean
     queryParams?: Record<string, any>
-    responseType?: T extends string ? "text" : T extends Record<string, any> ? "json" : T extends Blob ? "blob" : undefined
+    responseType?: T extends string ? "text" : T extends Blob ? "blob" : T extends Record<string, any> ? "json" : undefined
 } & ({
     signed: true
     payload?: Record<string, any>
@@ -211,7 +211,21 @@ export class BCA_API_Client {
             ...this.extraFetchArgs
         })
             .then(async res => {
-                const body: T = res.ok ? (responseType === "text" ? await res.text() : responseType === "blob" ? await res.blob() : await res.json()) : undefined
+                let body
+                if (res.ok) {
+                    switch (responseType) {
+                        case "text":
+                            body = await res.text()
+                        case "blob":
+                            const buffer = await res.arrayBuffer()
+                            body = new Blob([buffer])
+                        default:
+                            body = await res.json()
+                    }
+                }
+                else {
+                    body = undefined
+                }
                 return {
                     ok: res.ok,
                     status: res.status,
@@ -587,15 +601,17 @@ export class BCA_API_Client {
         }
         const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
+            responseType: "blob",
             queryParams: { deliveryMethod, financialYear },
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (deliveryMethod: "email" | "download", financialYear: number): Promise<FileResponse | StatusResponse> => {
+    requestAIIR = async (deliveryMethod: "email" | "download", financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
+            responseType: "blob",
             queryParams: { deliveryMethod, financialYear },
             auth: true
         })
@@ -605,6 +621,7 @@ export class BCA_API_Client {
     requestApplicationForm = async (deliveryMethod: "email" | "download", applicationForm: ApplicationForm): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
+            responseType: "blob",
             queryParams: { deliveryMethod },
             body: { applicationForm }
         })
