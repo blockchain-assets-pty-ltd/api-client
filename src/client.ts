@@ -144,7 +144,8 @@ const toISO = (date: string | Date | DateTime): string => {
 const serializeFile = async (file: File | null | undefined) => {
     return !file ? null : {
         filename: file.name,
-        content: await file?.text()
+        content: await file?.text(),
+        type: file.type
     }
 }
 
@@ -630,7 +631,7 @@ export class BCA_API_Client {
 
     requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
         if (applicationForm.formData) {
-            applicationForm.formData.idDocuments = serializeFile(applicationForm.formData?.idDocuments) as any
+            applicationForm.formData.idDocuments = await serializeFile(applicationForm.formData?.idDocuments) as any
             if (applicationForm.entityType == "Company") {
                 applicationForm.formData.company.companyExtract = await serializeFile(applicationForm.formData?.company.companyExtract) as any
             }
