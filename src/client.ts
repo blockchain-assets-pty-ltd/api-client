@@ -216,11 +216,14 @@ export class BCA_API_Client {
                     switch (responseType) {
                         case "text":
                             body = await res.text()
+                            break
                         case "blob":
                             const buffer = await res.arrayBuffer()
                             body = new Blob([buffer])
+                            break
                         default:
                             body = await res.json()
+                            break
                     }
                 }
                 else {
