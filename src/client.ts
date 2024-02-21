@@ -155,7 +155,7 @@ const blobToString = async (blob: Blob) => new Promise((resolve, reject) => {
 const serializeFile = async (file: File | null | undefined) => {
     return !file ? null : {
         filename: file.name,
-        content: blobToString(file),
+        content: await blobToString(file),
         type: file.type
     }
 }
