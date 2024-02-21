@@ -141,10 +141,21 @@ const toISO = (date: string | Date | DateTime): string => {
     }
 }
 
+const blobToString = async (blob: Blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+        resolve(reader.result?.toString())
+    }
+    reader.onerror = (error) => {
+        reject(error)
+    }
+    reader.readAsText(blob)
+})
+
 const serializeFile = async (file: File | null | undefined) => {
     return !file ? null : {
         filename: file.name,
-        content: await file?.text(),
+        content: blobToString(file),
         type: file.type
     }
 }
