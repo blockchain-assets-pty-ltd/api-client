@@ -590,7 +590,7 @@ export class BCA_API_Client {
         return { ok, status, data: !ok ? undefined : body.data }
     }
 
-    requestStatement = async (download: boolean, emailRecipients: string[], statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
+    requestStatement = async (download: boolean, emailRecipient: string | null, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
         let endpoint
         switch (statementType) {
             case "Account Statement":
@@ -605,27 +605,27 @@ export class BCA_API_Client {
         const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipients, financialYear },
+            queryParams: { download, emailRecipient, financialYear },
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (download: boolean, emailRecipients: string[], financialYear: number): Promise<FileResponse> => {
+    requestAIIR = async (download: boolean, emailRecipient: string | null, financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipients, financialYear },
+            queryParams: { download, emailRecipient, financialYear },
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
     }
 
-    requestApplicationForm = async (download: boolean, emailRecipients: string[], applicationForm: ApplicationForm): Promise<FileResponse> => {
+    requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipients },
+            queryParams: { download, emailRecipient },
             body: { applicationForm }
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
