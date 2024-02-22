@@ -141,25 +141,6 @@ const toISO = (date: string | Date | DateTime): string => {
     }
 }
 
-const blobToString = async (blob: Blob) => new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-        resolve(reader.result?.toString())
-    }
-    reader.onerror = (error) => {
-        reject(error)
-    }
-    reader.readAsText(blob)
-})
-
-const serializeFile = async (file: File | null | undefined) => {
-    return !file ? null : {
-        filename: file.name,
-        content: await blobToString(file),
-        type: file.type
-    }
-}
-
 export class BCA_API_Client {
     private apiUrl: string
     private authToken?: string
@@ -217,16 +198,25 @@ export class BCA_API_Client {
 
     private fetchBase = async <T extends Body>(endpoint: string, fetchOptions: FetchOptions<T>): Promise<APIResponse<T>> => {
         const { method, auth, responseType, queryParams, signed } = fetchOptions
-        const bodyString = JSON.stringify(signed ? { endpoint: `${method} ${endpoint}`, payload: fetchOptions.payload, date: DateTime.now().toUTC().toISO() } : fetchOptions.body)
+        const body = signed ?
+            JSON.stringify({ endpoint: `${method} ${endpoint}`, payload: fetchOptions.payload, date: DateTime.now().toUTC().toISO() }) :
+            fetchOptions.body instanceof FormData ?
+                fetchOptions.body :
+                fetchOptions.body !== undefined ?
+                    JSON.stringify(fetchOptions.body) :
+                    undefined
+
+        const contentType = { "Content-Type": body instanceof FormData ? "multipart/form-data" : "application/json" }
+
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
-            ...(bodyString && { "Content-Type": "application/json" }),
-            ...(signed && bodyString && { "Content-Signature": await this.signMessage(bodyString) })
+            ...contentType,
+            ...(signed && body && { "Content-Signature": await this.signMessage(body as string) })
         }
         return await fetch(`${this.apiUrl}${endpoint}${queryParams ? `?${new URLSearchParams(queryParams).toString()}` : ""}`, {
             method,
             headers,
-            body: bodyString,
+            body,
             ...this.extraFetchArgs
         })
             .then(async res => {
@@ -237,8 +227,7 @@ export class BCA_API_Client {
                             body = await res.text()
                             break
                         case "blob":
-                            const buffer = await res.arrayBuffer()
-                            body = new Blob([buffer])
+                            body = new Blob([await res.arrayBuffer()])
                             break
                         default:
                             body = await res.json()
@@ -641,22 +630,20 @@ export class BCA_API_Client {
     }
 
     requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
-        if (applicationForm.formData) {
-            applicationForm.formData.idDocuments = await serializeFile(applicationForm.formData?.idDocuments) as any
-            if (applicationForm.entityType == "Company") {
-                applicationForm.formData.company.companyExtract = await serializeFile(applicationForm.formData?.company.companyExtract) as any
-            }
-            if (applicationForm.entityType == "Trust") {
-                applicationForm.formData.trust.trustDeed = await serializeFile(applicationForm.formData?.trust.trustDeed) as any
-                if (applicationForm.formData.trust.corporateTrustee)
-                    applicationForm.formData.trust.corporateTrustee.companyExtract = await serializeFile(applicationForm.formData?.trust.corporateTrustee?.companyExtract) as any
-            }
-            if (applicationForm.entityType == "Superannuation Fund") {
-                applicationForm.formData.superannuationFund.trustDeed = await serializeFile(applicationForm.formData?.superannuationFund.trustDeed) as any
-                if (applicationForm.formData.superannuationFund.corporateTrustee)
-                    applicationForm.formData.superannuationFund.corporateTrustee.companyExtract = await serializeFile(applicationForm.formData?.superannuationFund.corporateTrustee?.companyExtract) as any
-            }
-        }
+        const idDocumentsFile = applicationForm.formData?.idDocuments ?? null
+        const trustDeedFile = applicationForm.entityType === "Trust" ? applicationForm.formData?.trust.trustDeed ?? null :
+            applicationForm.entityType === "Superannuation Fund" ? applicationForm.formData?.superannuationFund.trustDeed ?? null :
+                null
+        const companyExtractFile = applicationForm.entityType === "Company" ? applicationForm.formData?.company.companyExtract ?? null :
+            applicationForm.entityType === "Trust" && applicationForm.formData?.trust.corporateTrustee ? applicationForm.formData?.trust.corporateTrustee?.companyExtract ?? null :
+                applicationForm.entityType === "Superannuation Fund" && applicationForm.formData?.superannuationFund.corporateTrustee ? applicationForm.formData?.superannuationFund.corporateTrustee?.companyExtract ?? null :
+                    null
+
+        const formData = new FormData()
+        formData.append("jsonPayload", JSON.stringify(applicationForm))
+        idDocumentsFile && formData.append("file_idDocuments", idDocumentsFile)
+        trustDeedFile && formData.append("file_trustDeed", trustDeedFile)
+        companyExtractFile && formData.append("file_companyExtract", companyExtractFile)
 
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
