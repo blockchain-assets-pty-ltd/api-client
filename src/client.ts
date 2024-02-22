@@ -640,7 +640,7 @@ export class BCA_API_Client {
                     null
 
         const formData = new FormData()
-        formData.append("jsonPayload", JSON.stringify(applicationForm))
+        formData.append("applicationForm", JSON.stringify(applicationForm))
         idDocumentsFile && formData.append("file_idDocuments", idDocumentsFile)
         trustDeedFile && formData.append("file_trustDeed", trustDeedFile)
         companyExtractFile && formData.append("file_companyExtract", companyExtractFile)
