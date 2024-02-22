@@ -206,7 +206,7 @@ export class BCA_API_Client {
                     JSON.stringify(fetchOptions.body) :
                     undefined
 
-        const contentType = { "Content-Type": body instanceof FormData ? "multipart/form-data" : "application/json" }
+        const contentType = body instanceof FormData ? null : { "Content-Type": "application/json" }
 
         const headers = {
             ...(auth && { Authorization: await this.getAuthToken() }),
