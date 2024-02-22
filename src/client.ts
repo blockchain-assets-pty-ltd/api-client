@@ -649,7 +649,7 @@ export class BCA_API_Client {
             method: "POST",
             responseType: "blob",
             queryParams: { download, emailRecipient },
-            body: { applicationForm }
+            body: formData
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
     }
