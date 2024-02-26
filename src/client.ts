@@ -8,7 +8,7 @@ import Deserialise from "./deserialisation"
 type FetchOptions<T extends Body> = {
     method: string
     auth?: boolean
-    queryParams?: Record<string, any>
+    queryParams?: Record<string, string>
     responseType?: T extends string ? "text" : T extends Blob ? "blob" : T extends Record<string, any> ? "json" : undefined
 } & ({
     signed: true
@@ -214,11 +214,7 @@ export class BCA_API_Client {
             ...(signed && body && { "Content-Signature": await this.signMessage(body as string) })
         }
 
-        const queryString = queryParams ? `?${new URLSearchParams(
-            Object.fromEntries(Object.entries(queryParams).map(([key, value]) => [key, value === null ? '' : value]))
-        )}` : ""
-
-        return await fetch(`${this.apiUrl}${endpoint}${queryString}`, {
+        return await fetch(`${this.apiUrl}${endpoint}${queryParams ? `?${new URLSearchParams(queryParams).toString()}` : ""}`, {
             method,
             headers,
             body,
@@ -405,7 +401,7 @@ export class BCA_API_Client {
     }
 
     getFeeCalculation = async (valuationDate: string | Date | DateTime, aum: Big): Promise<DataResponse<FeeCalculation>> => {
-        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.CALCULATE_FEES, { method: "GET", queryParams: { valuationDate: toISO(valuationDate), aum: aum.toString() }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.FeeCalculation(data))
     }
 
@@ -435,7 +431,7 @@ export class BCA_API_Client {
     }
 
     getLiabilities = async (outstandingOnly: boolean): Promise<DataResponse<Liability[]>> => {
-        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.LIABILITIES, { method: "GET", queryParams: { outstandingOnly }, auth: true })
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.LIABILITIES, { method: "GET", queryParams: { outstandingOnly: outstandingOnly.toString() }, auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Liability))
     }
 
@@ -574,7 +570,7 @@ export class BCA_API_Client {
     getUnitRedemptionPreview = async (redemptionDate: string | Date | DateTime, accountId: number, redeemedUnits: Big): Promise<DataResponse<UnitHoldersRegisterEntry[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REDEMPTION_PREVIEW, {
             method: "GET",
-            queryParams: { redemptionDate: toISO(redemptionDate), accountId, redeemedUnits },
+            queryParams: { redemptionDate: toISO(redemptionDate), accountId: accountId.toString(), redeemedUnits: redeemedUnits.toString() },
             auth: true
         })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.UnitHoldersRegisterEntry))
@@ -603,7 +599,7 @@ export class BCA_API_Client {
         return { ok, status, data: !ok ? undefined : body.data }
     }
 
-    requestStatement = async (download: boolean, emailRecipient: string | null, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
+    requestStatement = async (download: boolean, emailRecipient: string | undefined, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
         let endpoint
         switch (statementType) {
             case "Account Statement":
@@ -618,23 +614,23 @@ export class BCA_API_Client {
         const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipient, financialYear },
+            queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "", financialYear: financialYear.toString() },
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (download: boolean, emailRecipient: string | null, financialYear: number): Promise<FileResponse> => {
+    requestAIIR = async (download: boolean, emailRecipient: string | undefined, financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipient, financialYear },
+            queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "", financialYear: financialYear.toString() },
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
     }
 
-    requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
+    requestApplicationForm = async (download: boolean, emailRecipient: string | undefined, applicationForm: ApplicationForm): Promise<FileResponse> => {
         const idDocumentsFile = applicationForm.formData?.idDocuments ?? null
         const trustDeedFile = applicationForm.entityType === "Trust" ? applicationForm.formData?.trust.trustDeed ?? null :
             applicationForm.entityType === "Superannuation Fund" ? applicationForm.formData?.superannuationFund.trustDeed ?? null :
@@ -653,7 +649,7 @@ export class BCA_API_Client {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
             responseType: "blob",
-            queryParams: { download, emailRecipient },
+            queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "" },
             body: formData
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
