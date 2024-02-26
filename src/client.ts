@@ -213,7 +213,12 @@ export class BCA_API_Client {
             ...contentType,
             ...(signed && body && { "Content-Signature": await this.signMessage(body as string) })
         }
-        return await fetch(`${this.apiUrl}${endpoint}${queryParams ? `?${new URLSearchParams(queryParams).toString()}` : ""}`, {
+
+        const queryString = queryParams ? `?${new URLSearchParams(
+            Object.fromEntries(Object.entries(queryParams).map(([key, value]) => [key, value === null ? '' : value]))
+        )}` : ""
+
+        return await fetch(`${this.apiUrl}${endpoint}${queryString}`, {
             method,
             headers,
             body,
