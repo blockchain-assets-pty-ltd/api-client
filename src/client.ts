@@ -599,7 +599,7 @@ export class BCA_API_Client {
         return { ok, status, data: !ok ? undefined : body.data }
     }
 
-    requestStatement = async (download: boolean, emailRecipient: string | undefined, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
+    requestStatement = async (download: boolean, emailRecipient: string | null, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
         let endpoint
         switch (statementType) {
             case "Account Statement":
@@ -620,7 +620,7 @@ export class BCA_API_Client {
         return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (download: boolean, emailRecipient: string | undefined, financialYear: number): Promise<FileResponse> => {
+    requestAIIR = async (download: boolean, emailRecipient: string | null, financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
             responseType: "blob",
@@ -630,7 +630,7 @@ export class BCA_API_Client {
         return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
     }
 
-    requestApplicationForm = async (download: boolean, emailRecipient: string | undefined, applicationForm: ApplicationForm): Promise<FileResponse> => {
+    requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
         const idDocumentsFile = applicationForm.formData?.idDocuments ?? null
         const trustDeedFile = applicationForm.entityType === "Trust" ? applicationForm.formData?.trust.trustDeed ?? null :
             applicationForm.entityType === "Superannuation Fund" ? applicationForm.formData?.superannuationFund.trustDeed ?? null :
