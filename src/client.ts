@@ -9,7 +9,6 @@ type FetchOptions<T extends Body> = {
     method: string
     auth?: boolean
     queryParams?: Record<string, string>
-    responseType?: T extends string ? "text" : T extends Blob ? "blob" : T extends Record<string, any> ? "json" : undefined
 } & ({
     signed: true
     payload?: Record<string, any>
@@ -197,7 +196,7 @@ export class BCA_API_Client {
     }
 
     private fetchBase = async <T extends Body>(endpoint: string, fetchOptions: FetchOptions<T>): Promise<APIResponse<T>> => {
-        const { method, auth, responseType, queryParams, signed } = fetchOptions
+        const { method, auth, queryParams, signed } = fetchOptions
         const body = signed ?
             JSON.stringify({ endpoint: `${method} ${endpoint}`, payload: fetchOptions.payload, date: DateTime.now().toUTC().toISO() }) :
             fetchOptions.body instanceof FormData ?
@@ -223,20 +222,13 @@ export class BCA_API_Client {
             .then(async res => {
                 let body
                 if (res.ok) {
-                    switch (responseType) {
-                        case "text":
-                            body = await res.text()
-                            break
-                        case "blob":
-                            body = new Blob([await res.arrayBuffer()])
-                            break
-                        default:
-                            body = await res.json()
-                            break
-                    }
-                }
-                else {
-                    body = undefined
+                    const contentType = res.headers.get("Content-Type")
+                    if (contentType?.includes("text/plain"))
+                        body = await res.text()
+                    else if (contentType?.includes("application/json"))
+                        body = await res.json()
+                    else if (contentType?.includes("application/pdf") || contentType?.includes("application/vnd"))
+                        body = new Blob([await res.arrayBuffer()])
                 }
                 return {
                     ok: res.ok,
@@ -613,7 +605,6 @@ export class BCA_API_Client {
         }
         const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
-            responseType: "blob",
             queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "", financialYear: financialYear.toString() },
             auth: true
         })
@@ -623,7 +614,6 @@ export class BCA_API_Client {
     requestAIIR = async (download: boolean, emailRecipient: string | null, financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
-            responseType: "blob",
             queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "", financialYear: financialYear.toString() },
             auth: true
         })
@@ -648,7 +638,6 @@ export class BCA_API_Client {
 
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
-            responseType: "blob",
             queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "" },
             body: formData
         })
