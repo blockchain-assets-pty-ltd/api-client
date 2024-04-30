@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber, ApplicationForm } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber, ApplicationForm, BankDetails, SignatoryDetails } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -113,6 +113,8 @@ const ENDPOINTS = {
     GENERATE_TAX_STATEMENT: (accountId: number) => `/v1/documents/generate/tax_statement/${accountId}`,
     GENERATE_AIIR: "/v1/documents/generate/aiir",
     GENERATE_APPLICATION_FORM: "/v1/documents/generate/application_form",
+    GENERATE_REDEMPTION_FORM: "/v1/documents/generate/redemption_form",
+    CERTIFICATE_BY_A_QUALIFIED_ACCOUNTANT_TEMPLATE: "/v1/documents/templates/certificate_by_a_qualified_accountant",
     JOBS: "/v1/jobs",
     JOB: (jobId: string) => `/v1/jobs/${jobId}`,
     JOB_TYPES: "/v1/job_types",
@@ -642,6 +644,32 @@ export class BCA_API_Client {
             body: formData
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
+    }
+
+    requestRedemptionForm = async (download: boolean, emailRecipient: string | null, redemptionFormData: {
+        entityName: string,
+        registeredAddress: string,
+        redemption: {
+            unitsToRedeem: Big,
+            valueToRedeem: null
+        } | {
+            unitsToRedeem: null,
+            valueToRedeem: Big
+        },
+        bank: BankDetails,
+        signatories: SignatoryDetails[]
+    } | null): Promise<FileResponse> => {
+        const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_REDEMPTION_FORM, {
+            method: "POST",
+            queryParams: { download: download.toString(), emailRecipient: emailRecipient?.toString() ?? "" },
+            body: { redemptionFormData }
+        })
+        return this.createFileResponse(response, "Redemption Form", "application/pdf")
+    }
+
+    getCertificateByAQualifiedAccountantTemplate = async (): Promise<FileResponse> => {
+        const response = await this.fetchBase<Blob>(ENDPOINTS.CERTIFICATE_BY_A_QUALIFIED_ACCOUNTANT_TEMPLATE, { method: "GET" })
+        return this.createFileResponse(response, "Certificate by a Qualified Accountant", "application/pdf")
     }
 
     performTaxAttribution = async (
