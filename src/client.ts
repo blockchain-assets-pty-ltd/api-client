@@ -667,7 +667,7 @@ export class BCA_API_Client {
         return this.createFileResponse(response, "Redemption Form", "application/pdf")
     }
 
-    getCertificateByAQualifiedAccountantTemplate = async (): Promise<FileResponse> => {
+    requestCertificateByAQualifiedAccountantTemplate = async (): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.CERTIFICATE_BY_A_QUALIFIED_ACCOUNTANT_TEMPLATE, { method: "GET" })
         return this.createFileResponse(response, "Certificate by a Qualified Accountant", "application/pdf")
     }
