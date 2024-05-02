@@ -623,7 +623,8 @@ export class BCA_API_Client {
     }
 
     requestApplicationForm = async (download: boolean, emailRecipient: string | null, applicationForm: ApplicationForm): Promise<FileResponse> => {
-        const idDocumentsFile = applicationForm.formData?.idDocuments ?? null
+        const idDocumentsFiles = applicationForm.formData?.idDocuments ?? null
+        const qualifiedAccountantCertificates = applicationForm.formData?.qualifiedAccountantCertificates ?? null
         const trustDeedFile = applicationForm.entityType === "Trust" ? applicationForm.formData?.trust.trustDeed ?? null :
             applicationForm.entityType === "Superannuation Fund" ? applicationForm.formData?.superannuationFund.trustDeed ?? null :
                 null
@@ -634,7 +635,8 @@ export class BCA_API_Client {
 
         const formData = new FormData()
         formData.append("applicationForm", JSON.stringify(applicationForm))
-        idDocumentsFile && formData.append("file_idDocuments", idDocumentsFile)
+        idDocumentsFiles?.forEach((f, i) => formData.append(`file_idDocuments_${i}`, f))
+        qualifiedAccountantCertificates?.forEach((f, i) => formData.append(`file_qualifiedAccountantCertificates_${i}`, f))
         trustDeedFile && formData.append("file_trustDeed", trustDeedFile)
         companyExtractFile && formData.append("file_companyExtract", companyExtractFile)
 
