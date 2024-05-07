@@ -1,4 +1,4 @@
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber, ApplicationForm, BankDetails, SignatoryDetails } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSource, AssetSnapshotsEntry, Bot, Client, FeeCalculation, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, ModificationLogEntry, UnitHoldersRegisterEntry, FeeCapitalisationsEntry, AttributionCalculation, TaxLedgerEntry, TaxAttribution, Job, Liability, TaxFileNumber, ApplicationForm, BankDetails, SignatoryDetails, AccountPartition } from "@blockchain-assets-pty-ltd/shared"
 import jwt from "jsonwebtoken"
 import type { Big } from "big.js"
 import { DateTime } from "luxon"
@@ -97,6 +97,8 @@ const ENDPOINTS = {
     ACCOUNT: (accountId: number) => `/v1/accounts/${accountId}`,
     REGISTERED_CLIENTS: (accountId: number) => `/v1/accounts/${accountId}/registered_clients`,
     REGISTERED_TFNS: (accountId: number) => `/v1/accounts/${accountId}/registered_tfns`,
+    ACCOUNT_PARTITIONS: "/v1/accounts/partitions",
+    PARTITIONS_FOR_ACCOUNT: (accountId: number) => `/v1/accounts/partitions/${accountId}`,
     CLIENTS: "/v1/clients",
     CLIENT: (clientId: number) => `/v1/clients/${clientId}`,
     REGISTERED_ACCOUNTS: (clientId: number) => `/v1/clients/${clientId}/registered_accounts`,
@@ -334,6 +336,11 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
     }
 
+    getAccountPartitions = async (): Promise<DataResponse<AccountPartition[]>> => {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.ACCOUNT_PARTITIONS, { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
+    }
+
     getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
@@ -357,6 +364,11 @@ export class BCA_API_Client {
     getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_TFNS(accountId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.TaxFileNumber))
+    }
+
+    getPartitionsForAccount = async (accountId: number): Promise<DataResponse<AccountPartition[]>> => {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.PARTITIONS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
     }
 
     getHistoricalFundMetrics = async (startDate: string | Date | DateTime, endDate: string | Date | DateTime): Promise<DataResponse<FundMetricsEntry[]>> => {
@@ -478,6 +490,15 @@ export class BCA_API_Client {
         const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
             method: "PUT",
             payload: { clientIds },
+            signed: true
+        })
+        return { ok, status }
+    }
+
+    updatePartitionsForAccount = async (accountId: number, partitions: Omit<AccountPartition, "accountId">[]): Promise<StatusResponse> => {
+        const { ok, status } = await this.fetchBase(ENDPOINTS.PARTITIONS_FOR_ACCOUNT(accountId), {
+            method: "PUT",
+            payload: { partitions },
             signed: true
         })
         return { ok, status }

@@ -1,6 +1,6 @@
 import { Big } from "big.js"
 import { DateTime } from "luxon"
-import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, TaxLedgerEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxAttribution, TaxFileNumber, UnitHoldersRegisterEntry, VintageData } from "@blockchain-assets-pty-ltd/shared"
+import type { Account, Administrator, Asset, AssetBalance, AssetPrice, AssetSettings, AssetSnapshotsEntry, AssetSource, TaxLedgerEntry, AttributionCalculation, Bot, CashDistribution, Client, FeeCalculation, FeeCapitalisationsEntry, FinancialYear, FundMetricsEntry, InvestorPortalAccessLogEntry, InvestorPortalOptions, Job, Liability, ModificationLogEntry, TaxAttribution, TaxFileNumber, UnitHoldersRegisterEntry, VintageData, AccountPartition } from "@blockchain-assets-pty-ltd/shared"
 import type { FundOverview } from "./client"
 
 const bigOrNull = (val: any) => val === null ? null : Big(val)
@@ -68,6 +68,11 @@ export default class Deserialise {
             initialInvestmentDate: !initialInvestmentDate ? initialInvestmentDate : dateTime(initialInvestmentDate),
             tfnProvided
         }
+    }
+
+    static AccountPartition: Deserialiser<AccountPartition> = (val) => {
+        const { accountId, order, units, name } = val
+        return { accountId: Number(accountId), order: Number(order), units: Big(units), name }
     }
 
     static Client: Deserialiser<Client> = (val) => {
