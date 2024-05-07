@@ -593,7 +593,7 @@ export class BCA_API_Client {
         return { ok, status, data: !ok ? undefined : body.data }
     }
 
-    requestStatement = async (download: boolean, emailRecipients: string[], statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
+    requestStatement = async (deliveryMethod: { download: true, emailRecipients?: null } | { download?: false, emailRecipients: string[] }, statementType: "Account Statement" | "Tax Statement", financialYear: number, accountId: number): Promise<FileResponse> => {
         let endpoint
         switch (statementType) {
             case "Account Statement":
@@ -608,23 +608,23 @@ export class BCA_API_Client {
         const response = await this.fetchBase<Blob>(endpoint(accountId), {
             method: "POST",
             queryParams: { financialYear: financialYear.toString() },
-            body: { download, emailRecipients },
+            body: deliveryMethod,
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} ${statementType}`, "application/pdf")
     }
 
-    requestAIIR = async (download: boolean, emailRecipients: string[], financialYear: number): Promise<FileResponse> => {
+    requestAIIR = async (deliveryMethod: { download: true, emailRecipients?: null } | { download?: false, emailRecipients: string[] }, financialYear: number): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_AIIR, {
             method: "POST",
             queryParams: { financialYear: financialYear.toString() },
-            body: { download, emailRecipients },
+            body: deliveryMethod,
             auth: true
         })
         return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
     }
 
-    requestApplicationForm = async (download: boolean, emailRecipients: string[], applicationForm: ApplicationForm): Promise<FileResponse> => {
+    requestApplicationForm = async (deliveryMethod: { download: true, emailRecipients?: null } | { download?: false, emailRecipients: string[] }, applicationForm: ApplicationForm): Promise<FileResponse> => {
         const idDocumentsFiles = applicationForm.formData?.idDocuments ?? null
         const qualifiedAccountantCertificates = applicationForm.formData?.qualifiedAccountantCertificates ?? null
         const trustDeedFile = applicationForm.entityType === "Trust" ? applicationForm.formData?.trust.trustDeed ?? null :
@@ -644,12 +644,12 @@ export class BCA_API_Client {
 
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
-            body: { download, emailRecipients, ...formData }
+            body: { ...deliveryMethod, ...formData }
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
     }
 
-    requestRedemptionForm = async (download: boolean, emailRecipients: string[], redemptionFormData: {
+    requestRedemptionForm = async (deliveryMethod: { download: true, emailRecipients?: null } | { download?: false, emailRecipients: string[] }, redemptionFormData: {
         entityName: string,
         registeredAddress: string,
         redemption: {
@@ -664,7 +664,7 @@ export class BCA_API_Client {
     } | null): Promise<FileResponse> => {
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_REDEMPTION_FORM, {
             method: "POST",
-            body: { download, emailRecipients, redemptionFormData }
+            body: { ...deliveryMethod, redemptionFormData }
         })
         return this.createFileResponse(response, "Redemption Form", "application/pdf")
     }
