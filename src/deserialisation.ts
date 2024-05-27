@@ -59,14 +59,15 @@ export default class Deserialise {
     }
 
     static Account: Deserialiser<Account> = (val) => {
-        const { id, name, entityType, addressLine1, addressLine2, suburb, state, postcode, country, distributionReinvestmentPercentage, oldId, unitsHeld, netRemainingCapital, initialInvestmentDate, tfnProvided } = val
+        const { id, name, entityType, addressLine1, addressLine2, suburb, state, postcode, country, distributionReinvestmentPercentage, oldId, unitsHeld, netRemainingCapital, initialInvestmentDate, tfnProvided, redacted } = val
         return {
             id, name, entityType, addressLine1, addressLine2, suburb, state, postcode, country, oldId,
             distributionReinvestmentPercentage: Big(distributionReinvestmentPercentage),
             unitsHeld: unitsHeld === undefined ? undefined : bigOrNull(unitsHeld),
             netRemainingCapital: netRemainingCapital === undefined ? undefined : bigOrNull(netRemainingCapital),
             initialInvestmentDate: !initialInvestmentDate ? initialInvestmentDate : dateTime(initialInvestmentDate),
-            tfnProvided
+            tfnProvided,
+            redacted
         }
     }
 
