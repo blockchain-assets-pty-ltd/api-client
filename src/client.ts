@@ -102,6 +102,7 @@ const ENDPOINTS = {
     CLIENTS: "/v1/clients",
     CLIENT: (clientId: number) => `/v1/clients/${clientId}`,
     REGISTERED_ACCOUNTS: (clientId: number) => `/v1/clients/${clientId}/registered_accounts`,
+    PARTITIONS_FOR_CLIENT: (clientId: number) => `/v1/clients/${clientId}/account_partitions`,
     HISTORICAL_FUND_METRICS: "/v1/fund_metrics/historical",
     RECENT_FUND_METRICS: "/v1/fund_metrics/recent",
     INVESTOR_PORTAL_ACCESS_LOG: "/v1/investor_portal/access_log",
@@ -372,6 +373,11 @@ export class BCA_API_Client {
 
     getPartitionsForAccount = async (accountId: number): Promise<DataResponse<AccountPartition[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.PARTITIONS_FOR_ACCOUNT(accountId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
+    }
+
+    getPartitionsForClient = async (clientId: number): Promise<DataResponse<AccountPartition[]>> => {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.PARTITIONS_FOR_CLIENT(clientId), { method: "GET", auth: true })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
     }
 
