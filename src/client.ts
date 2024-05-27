@@ -341,8 +341,12 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
     }
 
-    getClientsForAccount = async (accountId: number): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
+    getClientsForAccount = async (accountId: number, includeRestrictedClients: boolean): Promise<DataResponse<Client[]>> => {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
+            method: "GET",
+            queryParams: { includeRestrictedClients: includeRestrictedClients.toString() },
+            auth: true
+        })
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
     }
 
