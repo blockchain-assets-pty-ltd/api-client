@@ -342,13 +342,9 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.AccountPartition))
     }
 
-    getClientsForAccount = async (accountId: number, includeRestrictedClients: boolean): Promise<DataResponse<Client[]>> => {
-        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
-            method: "GET",
-            queryParams: { includeRestrictedClients: includeRestrictedClients.toString() },
-            auth: true
-        })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Client))
+    getClientsForAccount = async (accountId: number): Promise<DataResponse<{ client: Client, restrictToPartition: number | null }[]>> => {
+        const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ client: Deserialise.Client(d), restrictToPartition: d.restrictToPartition })))
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
@@ -361,9 +357,9 @@ export class BCA_API_Client {
         return this.createDataResponse(response, (data) => Deserialise.Client(data))
     }
 
-    getAccountsForClient = async (clientId: number): Promise<DataResponse<Account[]>> => {
+    getAccountsForClient = async (clientId: number): Promise<DataResponse<{ account: Account, restrictToPartition: number | null }[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, Deserialise.Account))
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ account: Deserialise.Account(d), restrictToPartition: d.restrictToPartition })))
     }
 
     getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
