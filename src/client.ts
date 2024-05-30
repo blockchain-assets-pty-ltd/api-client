@@ -344,7 +344,7 @@ export class BCA_API_Client {
 
     getClientsForAccount = async (accountId: number): Promise<DataResponse<{ client: Client, restrictToPartition: number | null }[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_CLIENTS(accountId), { method: "GET", auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ client: Deserialise.Client(d), restrictToPartition: d.restrictToPartition })))
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ client: Deserialise.Client(d.client), restrictToPartition: d.restrictToPartition })))
     }
 
     getClients = async (): Promise<DataResponse<Client[]>> => {
@@ -359,7 +359,7 @@ export class BCA_API_Client {
 
     getAccountsForClient = async (clientId: number): Promise<DataResponse<{ account: Account, restrictToPartition: number | null }[]>> => {
         const response = await this.fetchBase<Record<string, any>>(ENDPOINTS.REGISTERED_ACCOUNTS(clientId), { method: "GET", auth: true })
-        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ account: Deserialise.Account(d), restrictToPartition: d.restrictToPartition })))
+        return this.createDataResponse(response, (data) => Deserialise.Array(data, (d) => ({ account: Deserialise.Account(d.account), restrictToPartition: d.restrictToPartition })))
     }
 
     getTaxFileNumbersForAccount = async (accountId: number): Promise<DataResponse<TaxFileNumber[]>> => {
