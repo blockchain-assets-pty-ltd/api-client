@@ -492,10 +492,10 @@ export class BCA_API_Client {
         return { ok, status }
     }
 
-    updateClientsForAccount = async (accountId: number, clientIds: number[]): Promise<StatusResponse> => {
+    updateClientsForAccount = async (accountId: number, clientsForAccount: { clientId: number, restrictToPartition: number | null }[]): Promise<StatusResponse> => {
         const { ok, status } = await this.fetchBase(ENDPOINTS.REGISTERED_CLIENTS(accountId), {
             method: "PUT",
-            payload: { clientIds },
+            payload: { clientsForAccount },
             signed: true
         })
         return { ok, status }
