@@ -72,8 +72,8 @@ export default class Deserialise {
     }
 
     static AccountPartition: Deserialiser<AccountPartition> = (val) => {
-        const { accountId, order, units, averageUnitPrice, name } = val
-        return { accountId: Number(accountId), order: Number(order), units: Big(units), averageUnitPrice: Big(averageUnitPrice), name }
+        const { accountId, order, units, averageUnitPrice, name, actualUnits } = val
+        return { accountId: Number(accountId), order: Number(order), units: Big(units), averageUnitPrice: Big(averageUnitPrice), name, actualUnits: Big(actualUnits) }
     }
 
     static Client: Deserialiser<Client> = (val) => {
