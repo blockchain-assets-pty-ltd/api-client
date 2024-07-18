@@ -236,9 +236,10 @@ export default class Deserialise {
     }
 
     static CashDistribution: Deserialiser<CashDistribution> = (val) => {
-        const { cashRedeemed, cashReinvested, cashPaidOut } = val
+        const { cashRedeemedReturnOfCapital, cashRedeemedProfit, cashReinvested, cashPaidOut } = val
         return {
-            cashRedeemed: Big(cashRedeemed),
+            cashRedeemedReturnOfCapital: Big(cashRedeemedReturnOfCapital),
+            cashRedeemedProfit: Big(cashRedeemedProfit),
             cashReinvested: Big(cashReinvested),
             cashPaidOut: Big(cashPaidOut)
         }
