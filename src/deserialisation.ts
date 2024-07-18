@@ -246,12 +246,12 @@ export default class Deserialise {
     }
 
     static TaxLedgerEntry: Deserialiser<TaxLedgerEntry> = (val) => {
-        const { date, accountId, discountedCapitalGains, otherCapitalGains, otherIncome, cashRedeemed, cashReinvested, cashPaidOut } = val
+        const { date, accountId, discountedCapitalGains, otherCapitalGains, otherIncome, cashRedeemedReturnOfCapital, cashRedeemedProfit, cashReinvested, cashPaidOut } = val
         return {
             date: dateTime(date),
             accountId: Number(accountId),
             ...this.TaxAttribution({ discountedCapitalGains, otherCapitalGains, otherIncome }),
-            ...this.CashDistribution({ cashRedeemed, cashReinvested, cashPaidOut })
+            ...this.CashDistribution({ cashRedeemedReturnOfCapital, cashRedeemedProfit, cashReinvested, cashPaidOut })
         }
     }
 
