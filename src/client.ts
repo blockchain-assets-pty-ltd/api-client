@@ -648,7 +648,7 @@ export class BCA_API_Client {
             body: deliveryMethod,
             auth: true
         })
-        return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd")
+        return this.createFileResponse(response, `FY${financialYear % 100} AIIR`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     }
 
     requestApplicationForm = async (deliveryMethod: { download: true, emailRecipients?: null } | { download?: false, emailRecipients: string[] }, applicationForm: ApplicationForm): Promise<FileResponse> => {
