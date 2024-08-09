@@ -668,10 +668,10 @@ export class BCA_API_Client {
         qualifiedAccountantCertificates?.forEach((f, i) => formData.append(`file_qualifiedAccountantCertificates_${i}`, f))
         trustDeedFile && formData.append("file_trustDeed", trustDeedFile)
         companyExtractFile && formData.append("file_companyExtract", companyExtractFile)
-
+        const body = { ...deliveryMethod, ...formData }
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
-            body: { ...deliveryMethod, applicationFormData: formData }
+            body
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
     }
