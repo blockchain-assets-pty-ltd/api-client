@@ -671,7 +671,7 @@ export class BCA_API_Client {
 
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
-            body: { ...deliveryMethod, ...formData }
+            body: { ...deliveryMethod, applicationFormData: formData }
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
     }
