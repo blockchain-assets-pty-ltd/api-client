@@ -671,7 +671,10 @@ export class BCA_API_Client {
 
         const response = await this.fetchBase<Blob>(ENDPOINTS.GENERATE_APPLICATION_FORM, {
             method: "POST",
-            queryParams: { download: deliveryMethod.download?.toString() ?? "", emailRecipient: deliveryMethod.emailRecipients?.toString() ?? "" },
+            queryParams: {
+                ...(deliveryMethod.download === undefined ? {} : { download: deliveryMethod.download.toString() }),
+                ...(!deliveryMethod.emailRecipients ? {} : { download: JSON.stringify(deliveryMethod.emailRecipients) })
+            },
             body: formData
         })
         return this.createFileResponse(response, `${applicationForm.entityType} Application Form`, "application/pdf")
