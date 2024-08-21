@@ -673,7 +673,7 @@ export class BCA_API_Client {
             method: "POST",
             queryParams: {
                 ...(deliveryMethod.download === undefined ? {} : { download: deliveryMethod.download.toString() }),
-                ...(!deliveryMethod.emailRecipients ? {} : { download: JSON.stringify(deliveryMethod.emailRecipients) })
+                ...(!deliveryMethod.emailRecipients ? {} : { emailRecipients: JSON.stringify(deliveryMethod.emailRecipients) })
             },
             body: formData
         })
