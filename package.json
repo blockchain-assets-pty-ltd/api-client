@@ -1,6 +1,6 @@
 {
   "name": "@blockchain-assets-pty-ltd/api-client",
-  "version": "1.38.24",
+  "version": "1.38.25",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
